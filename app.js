@@ -57,8 +57,8 @@ function init() {
 
   // メインボタン
   document.getElementById('btn-start').addEventListener('click', startSession);
+  document.getElementById('btn-test-notify').addEventListener('click', testNotification);
   document.getElementById('btn-toilet').addEventListener('click', handleToilet);
-  document.getElementById('btn-toilet-break').addEventListener('click', handleToilet);
   document.getElementById('btn-interrupt').addEventListener('click', handleInterrupt);
   document.getElementById('btn-violation').addEventListener('click', handleViolation);
   document.getElementById('btn-stop').addEventListener('click', handleStop);
@@ -86,7 +86,13 @@ function initAudio() {
   }
 }
 
+function ensureAudio() {
+  if (!audioCtx) initAudio();
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+}
+
 function playTone(freq, duration, volume, delay) {
+  ensureAudio();
   if (!audioCtx) return;
   const startTime = audioCtx.currentTime + (delay || 0);
   const osc = audioCtx.createOscillator();
@@ -102,13 +108,29 @@ function playTone(freq, duration, volume, delay) {
 }
 
 function playPreSound() {
-  playTone(523, 0.4, 0.15, 0);
+  playTone(523, 0.4, 0.2, 0);
 }
 
 function playCompleteSound() {
-  playTone(659, 0.2, 0.3, 0);
-  playTone(784, 0.2, 0.3, 0.25);
-  playTone(1047, 0.35, 0.35, 0.5);
+  playTone(659, 0.25, 0.4, 0);
+  playTone(784, 0.25, 0.4, 0.3);
+  playTone(1047, 0.4, 0.45, 0.6);
+}
+
+function testNotification() {
+  initAudio();
+  const btn = document.getElementById('btn-test-notify');
+  btn.textContent = '予告通知...';
+  btn.disabled = true;
+  preNotify();
+  setTimeout(() => {
+    btn.textContent = '到達通知...';
+    completeNotify();
+    setTimeout(() => {
+      btn.textContent = '通知テスト';
+      btn.disabled = false;
+    }, 1200);
+  }, 1500);
 }
 
 // ==========================================
@@ -238,17 +260,17 @@ function updateUI() {
   updateCycleDots();
 
   // ボタン表示制御
-  const workActions = document.getElementById('work-actions');
-  const breakActions = document.getElementById('break-actions');
+  const btnInterrupt = document.getElementById('btn-interrupt');
+  const btnViolation = document.getElementById('btn-violation');
   const breakReminder = document.getElementById('break-reminder');
 
   if (state === 'working') {
-    workActions.hidden = false;
-    breakActions.hidden = true;
+    btnInterrupt.hidden = false;
+    btnViolation.hidden = false;
     breakReminder.hidden = true;
   } else {
-    workActions.hidden = true;
-    breakActions.hidden = false;
+    btnInterrupt.hidden = true;
+    btnViolation.hidden = true;
     breakReminder.hidden = false;
   }
 
