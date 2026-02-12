@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#0f172a"/>
+  <circle cx="256" cy="272" r="180" fill="none" stroke="#818cf8" stroke-width="24"/>
+  <line x1="256" y1="272" x2="256" y2="152" stroke="#f1f5f9" stroke-width="16" stroke-linecap="round"/>
+  <line x1="256" y1="272" x2="336" y2="272" stroke="#94a3b8" stroke-width="12" stroke-linecap="round"/>
+  <circle cx="256" cy="272" r="12" fill="#f1f5f9"/>
+  <text x="256" y="80" text-anchor="middle" font-size="56" font-family="sans-serif" font-weight="bold" fill="#818cf8">松</text>
+</svg>

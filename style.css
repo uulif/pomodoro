@@ -1,0 +1,419 @@
+/* ==========================================
+   松村式ポモドーロタイマー - スタイル
+   ========================================== */
+
+:root {
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --text: #f1f5f9;
+  --text-sub: #94a3b8;
+  --work: #818cf8;
+  --work-bg: rgba(129, 140, 248, 0.1);
+  --break: #34d399;
+  --break-bg: rgba(52, 211, 153, 0.1);
+  --long-break: #a78bfa;
+  --long-break-bg: rgba(167, 139, 250, 0.1);
+  --ban: #f87171;
+  --ban-bg: rgba(248, 113, 113, 0.1);
+  --btn-radius: 12px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hiragino Sans", "Noto Sans JP", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* --- 画面共通 --- */
+
+.screen {
+  display: none;
+  position: fixed;
+  inset: 0;
+  padding: env(safe-area-inset-top, 20px) 24px env(safe-area-inset-bottom, 20px);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.screen.active {
+  display: flex;
+}
+
+.center-content,
+.setup-content,
+.timer-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 400px;
+  gap: 16px;
+}
+
+/* --- セットアップ画面 --- */
+
+.app-title {
+  font-size: clamp(2rem, 8vw, 3rem);
+  font-weight: 800;
+  text-align: center;
+  line-height: 1.2;
+  color: var(--work);
+}
+
+.app-subtitle {
+  font-size: 0.9rem;
+  color: var(--text-sub);
+  text-align: center;
+}
+
+.set-selector {
+  width: 100%;
+  background: var(--surface);
+  border-radius: 16px;
+  padding: 20px;
+  margin: 16px 0;
+}
+
+.set-heading {
+  font-size: 0.85rem;
+  color: var(--text-sub);
+  text-align: center;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.set-options {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.set-btn {
+  width: 52px;
+  height: 52px;
+  border: 2px solid var(--text-sub);
+  border-radius: var(--btn-radius);
+  background: transparent;
+  color: var(--text-sub);
+  font-size: 1.2rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.set-btn.selected {
+  border-color: var(--work);
+  background: var(--work-bg);
+  color: var(--work);
+}
+
+/* --- ボタン共通 --- */
+
+.btn-primary {
+  width: 100%;
+  max-width: 280px;
+  height: 56px;
+  border: none;
+  border-radius: var(--btn-radius);
+  background: var(--work);
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  margin-top: 8px;
+}
+
+.btn-primary:active {
+  opacity: 0.8;
+}
+
+/* --- タイマー画面 --- */
+
+.state-label {
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--work);
+  transition: color 0.3s;
+}
+
+.cycle-label {
+  font-size: 0.85rem;
+  color: var(--text-sub);
+}
+
+.timer-display {
+  font-family: "SF Mono", "Cascadia Code", "Consolas", monospace;
+  font-size: clamp(4rem, 20vw, 7rem);
+  font-weight: 300;
+  letter-spacing: 0.05em;
+  line-height: 1;
+  color: var(--text);
+  transition: color 0.3s;
+  margin: 8px 0;
+}
+
+.cycle-dots {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin: 4px 0;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--text-sub);
+  background: transparent;
+  transition: all 0.3s;
+}
+
+.dot.active {
+  border-color: var(--work);
+  background: var(--work);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.dot.completed {
+  border-color: var(--break);
+  background: var(--break);
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.set-label-info {
+  font-size: 0.85rem;
+  color: var(--text-sub);
+}
+
+.break-reminder {
+  font-size: 0.8rem;
+  color: var(--break);
+  background: var(--break-bg);
+  padding: 8px 16px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+/* --- アクションボタン --- */
+
+.action-group {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+.btn-action {
+  height: 48px;
+  padding: 0 20px;
+  border: 2px solid;
+  border-radius: var(--btn-radius);
+  background: transparent;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-action:active {
+  opacity: 0.7;
+}
+
+.btn-toilet {
+  border-color: var(--text-sub);
+  color: var(--text-sub);
+}
+
+.btn-interrupt {
+  border-color: #fbbf24;
+  color: #fbbf24;
+}
+
+.btn-violation {
+  border-color: var(--ban);
+  color: var(--ban);
+}
+
+.btn-stop {
+  margin-top: 24px;
+  height: 40px;
+  padding: 0 24px;
+  border: 1px solid var(--text-sub);
+  border-radius: var(--btn-radius);
+  background: transparent;
+  color: var(--text-sub);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-stop.stop-confirm {
+  border-color: var(--ban);
+  color: var(--ban);
+  animation: blink 0.5s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* --- 状態別カラー --- */
+
+.state-working .state-label,
+.state-working .dot.active {
+  color: var(--work);
+}
+
+.state-short_break .state-label,
+.state-interrupt_break .state-label {
+  color: var(--break);
+}
+
+.state-short_break .timer-display,
+.state-interrupt_break .timer-display {
+  color: var(--break);
+}
+
+.state-short_break .dot.active,
+.state-interrupt_break .dot.active {
+  border-color: var(--break);
+  background: var(--break);
+}
+
+.state-long_break .state-label {
+  color: var(--long-break);
+}
+
+.state-long_break .timer-display {
+  color: var(--long-break);
+}
+
+.state-long_break .dot.active {
+  border-color: var(--long-break);
+  background: var(--long-break);
+}
+
+/* --- トイレ画面 --- */
+
+.pause-label {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.pause-rule {
+  font-size: 0.85rem;
+  color: var(--text-sub);
+  text-align: center;
+  line-height: 1.6;
+  background: var(--surface);
+  padding: 12px 20px;
+  border-radius: 12px;
+}
+
+/* --- 中断画面 --- */
+
+.interrupt-info {
+  font-family: "SF Mono", "Cascadia Code", "Consolas", monospace;
+  font-size: 1.3rem;
+  color: #fbbf24;
+}
+
+.interrupt-action {
+  font-size: 0.9rem;
+  color: var(--text-sub);
+  background: var(--surface);
+  padding: 12px 20px;
+  border-radius: 12px;
+  text-align: center;
+}
+
+/* --- 使用禁止画面 --- */
+
+.state-ban {
+  color: var(--ban) !important;
+}
+
+.timer-ban {
+  color: var(--ban) !important;
+}
+
+.ban-message {
+  font-size: 0.9rem;
+  color: var(--text-sub);
+  text-align: center;
+}
+
+/* --- 再開画面 --- */
+
+.resume-info {
+  font-size: 1rem;
+  color: var(--text-sub);
+}
+
+/* --- 完了画面 --- */
+
+.complete-check {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: var(--break);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  color: #fff;
+}
+
+.complete-message {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+#screen-complete .btn-primary {
+  background: var(--break);
+}
+
+#screen-resume .btn-primary {
+  background: var(--work);
+}
+
+/* --- レスポンシブ --- */
+
+@media (max-height: 600px) {
+  .timer-display {
+    font-size: 3.5rem;
+  }
+  .action-group {
+    margin-top: 8px;
+  }
+  .btn-action {
+    height: 40px;
+    padding: 0 14px;
+    font-size: 0.8rem;
+  }
+}

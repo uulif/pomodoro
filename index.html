@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <title>松村式ポモドーロ</title>
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- セットアップ画面 -->
+  <div id="screen-setup" class="screen active">
+    <div class="setup-content">
+      <h1 class="app-title">松村式<br>ポモドーロ</h1>
+      <p class="app-subtitle">25分作業 / 5:30休憩 / 25分長休憩</p>
+      <div class="set-selector">
+        <div class="set-heading">セット数</div>
+        <div class="set-options">
+          <button class="set-btn selected" data-sets="1">1</button>
+          <button class="set-btn" data-sets="2">2</button>
+          <button class="set-btn" data-sets="3">3</button>
+          <button class="set-btn" data-sets="4">4</button>
+          <button class="set-btn" data-sets="0">&infin;</button>
+        </div>
+      </div>
+      <button id="btn-start" class="btn-primary">スタート</button>
+    </div>
+  </div>
+
+  <!-- タイマー画面 -->
+  <div id="screen-timer" class="screen">
+    <div class="timer-content">
+      <div id="state-label" class="state-label">作業中</div>
+      <div id="cycle-label" class="cycle-label">サイクル 1 / 4</div>
+      <div id="timer-display" class="timer-display">25:00</div>
+      <div id="cycle-dots" class="cycle-dots"></div>
+      <div id="set-label" class="set-label-info">セット 1</div>
+      <div id="break-reminder" class="break-reminder" hidden>受動的快楽か、何もしないこと</div>
+      <div id="work-actions" class="action-group">
+        <button id="btn-toilet" class="btn-action btn-toilet">トイレ</button>
+        <button id="btn-interrupt" class="btn-action btn-interrupt">中断</button>
+        <button id="btn-violation" class="btn-action btn-violation">違反</button>
+      </div>
+      <div id="break-actions" class="action-group" hidden>
+        <button id="btn-toilet-break" class="btn-action btn-toilet">トイレ</button>
+      </div>
+      <button id="btn-stop" class="btn-stop">停止</button>
+    </div>
+  </div>
+
+  <!-- トイレ一時停止画面 -->
+  <div id="screen-toilet" class="screen">
+    <div class="center-content">
+      <div class="state-label">一時停止中</div>
+      <div class="pause-label">トイレ中断</div>
+      <p class="pause-rule">トイレ以外は一切禁止<br>スマホ・SNS禁止</p>
+      <button id="btn-resume" class="btn-primary">再開</button>
+    </div>
+  </div>
+
+  <!-- 外的中断画面 -->
+  <div id="screen-interrupt" class="screen">
+    <div class="center-content">
+      <div class="state-label">中断中</div>
+      <div id="interrupt-elapsed" class="interrupt-info">作業経過: 00:00</div>
+      <div id="interrupt-action" class="interrupt-action"></div>
+      <button id="btn-return" class="btn-primary">戻る</button>
+    </div>
+  </div>
+
+  <!-- 使用禁止画面 -->
+  <div id="screen-ban" class="screen">
+    <div class="center-content">
+      <div class="state-label state-ban">使用禁止</div>
+      <div id="ban-timer" class="timer-display timer-ban">3:00</div>
+      <div class="ban-message">内的中断 &#8212; ポモドーロ不成立</div>
+    </div>
+  </div>
+
+  <!-- バン後の再開画面 -->
+  <div id="screen-resume" class="screen">
+    <div class="center-content">
+      <div class="state-label">準備完了</div>
+      <div id="resume-info" class="resume-info"></div>
+      <button id="btn-resume-work" class="btn-primary">再開</button>
+    </div>
+  </div>
+
+  <!-- 完了画面 -->
+  <div id="screen-complete" class="screen">
+    <div class="center-content">
+      <div class="complete-check">&#10003;</div>
+      <div class="complete-message">お疲れ様でした</div>
+      <button id="btn-restart" class="btn-primary">もう一度</button>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
