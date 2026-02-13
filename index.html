@@ -31,6 +31,25 @@
       </div>
       <button id="btn-start" class="btn-primary">スタート</button>
       <button id="btn-test-notify" class="btn-test">通知テスト</button>
+      <details class="rules-section">
+        <summary class="rules-toggle">松村式ルール</summary>
+        <div class="rules-content">
+          <dl>
+            <dt>基本サイクル</dt>
+            <dd>25分作業 &rarr; 5:30休憩（&times;4、4回目は25分休憩）</dd>
+            <dt>休憩ルール</dt>
+            <dd>強制。スキップ・停止・解除 不可<br>受動的快楽か、何もしないこと</dd>
+            <dt>作業中の禁止事項</dt>
+            <dd>音楽・BGM / 動画 / SNS / メール / その他</dd>
+            <dt>トイレ中断</dt>
+            <dd>続きから再開（スマホ禁止）</dd>
+            <dt>緊急中断（電話・来客等）</dt>
+            <dd>0〜5分 &rarr; 休憩なしでやり直し<br>5〜20分 &rarr; 5:30休憩後やり直し<br>20分〜 &rarr; 続きから再開</dd>
+            <dt>違反（禁止事項破り）</dt>
+            <dd>ポモドーロ不成立（存在しない扱い）<br>3分間使用禁止</dd>
+          </dl>
+        </div>
+      </details>
     </div>
   </div>
 
@@ -44,11 +63,13 @@
       <div id="set-label" class="set-label-info">セット 1</div>
       <div id="break-reminder" class="break-reminder" hidden>受動的快楽か、何もしないこと</div>
       <div class="action-group">
-        <button id="btn-toilet" class="btn-action btn-toilet">トイレ</button>
-        <button id="btn-interrupt" class="btn-action btn-interrupt" hidden>中断</button>
-        <button id="btn-violation" class="btn-action btn-violation" hidden>違反</button>
+        <button id="btn-toilet" class="btn-action btn-toilet" hidden>トイレ</button>
+        <button id="btn-interrupt" class="btn-action btn-interrupt" hidden>緊急中断</button>
       </div>
-      <button id="btn-stop" class="btn-stop">停止</button>
+      <div id="violation-row" class="violation-row" hidden>
+        <button id="btn-violation" class="btn-action btn-violation">違反</button>
+      </div>
+      <button id="btn-stop" class="btn-stop" hidden>停止</button>
     </div>
   </div>
 
@@ -78,6 +99,7 @@
       <div class="state-label state-ban">使用禁止</div>
       <div id="ban-timer" class="timer-display timer-ban">3:00</div>
       <div class="ban-message">内的中断 &#8212; ポモドーロ不成立</div>
+      <button id="btn-ban-stop" class="btn-stop ban-stop-btn">セッションを終了</button>
     </div>
   </div>
 

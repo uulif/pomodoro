@@ -1,5 +1,5 @@
 /* ==========================================
-   松村式ポモドーロタイマー - スタイル
+   松村式ポモドーロタイマー - スタイル v2
    ========================================== */
 
 :root {
@@ -166,6 +166,67 @@ body {
   opacity: 0.5;
 }
 
+/* --- ルール表示 --- */
+
+.rules-section {
+  width: 100%;
+  max-width: 280px;
+  margin-top: 8px;
+}
+
+.rules-toggle {
+  display: block;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--text-sub);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: var(--btn-radius);
+  list-style: none;
+}
+
+.rules-toggle::-webkit-details-marker {
+  display: none;
+}
+
+.rules-toggle::before {
+  content: '\25B6  ';
+  font-size: 0.7rem;
+}
+
+details[open] > .rules-toggle::before {
+  content: '\25BC  ';
+}
+
+.rules-content {
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 8px;
+}
+
+.rules-content dl {
+  margin: 0;
+}
+
+.rules-content dt {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--work);
+  margin-top: 12px;
+}
+
+.rules-content dt:first-child {
+  margin-top: 0;
+}
+
+.rules-content dd {
+  font-size: 0.75rem;
+  color: var(--text-sub);
+  margin: 4px 0 0 0;
+  line-height: 1.6;
+}
+
 /* --- タイマー画面 --- */
 
 .state-label {
@@ -243,13 +304,13 @@ body {
 
 .action-group {
   display: flex;
-  gap: 12px;
+  gap: 16px;
   justify-content: center;
   margin-top: 16px;
 }
 
 .btn-action {
-  height: 48px;
+  min-height: 48px;
   padding: 0 20px;
   border: 2px solid;
   border-radius: var(--btn-radius);
@@ -274,14 +335,27 @@ body {
   color: #fbbf24;
 }
 
+/* 違反ボタン（独立行、物理的に離す） */
+
+.violation-row {
+  margin-top: 12px;
+}
+
 .btn-violation {
   border-color: var(--ban);
   color: var(--ban);
 }
 
+.btn-violation.violation-confirm {
+  background: var(--ban-bg);
+  animation: blink 0.5s ease-in-out infinite;
+}
+
+/* 停止ボタン */
+
 .btn-stop {
   margin-top: 24px;
-  height: 40px;
+  min-height: 48px;
   padding: 0 24px;
   border: 1px solid var(--text-sub);
   border-radius: var(--btn-radius);
@@ -296,6 +370,10 @@ body {
   border-color: var(--ban);
   color: var(--ban);
   animation: blink 0.5s ease-in-out infinite;
+}
+
+.ban-stop-btn {
+  margin-top: 32px;
 }
 
 @keyframes blink {
@@ -434,7 +512,7 @@ body {
     margin-top: 8px;
   }
   .btn-action {
-    height: 40px;
+    min-height: 44px;
     padding: 0 14px;
     font-size: 0.8rem;
   }
