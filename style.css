@@ -3,18 +3,18 @@
    ========================================== */
 
 :root {
-  --bg: #1a1f2e;
-  --surface: #262d3f;
-  --text: #f0f2f5;
-  --text-sub: #b0b8c8;
-  --work: #93a0ff;
-  --work-bg: rgba(147, 160, 255, 0.12);
-  --break: #4ee0a8;
-  --break-bg: rgba(78, 224, 168, 0.12);
-  --long-break: #b99cff;
-  --long-break-bg: rgba(185, 156, 255, 0.12);
-  --ban: #ff8080;
-  --ban-bg: rgba(255, 128, 128, 0.12);
+  --bg: #36393f;
+  --surface: #40444b;
+  --text: #f2f3f5;
+  --text-sub: #d2d5da;
+  --work: #a4b0ff;
+  --work-bg: rgba(164, 176, 255, 0.15);
+  --break: #5ff5b8;
+  --break-bg: rgba(95, 245, 184, 0.15);
+  --long-break: #c9b0ff;
+  --long-break-bg: rgba(201, 176, 255, 0.15);
+  --ban: #ff9090;
+  --ban-bg: rgba(255, 144, 144, 0.15);
   --btn-radius: 12px;
 }
 
