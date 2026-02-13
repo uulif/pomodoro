@@ -79,9 +79,11 @@ function setupEventListeners() {
 
   // トイレ画面
   document.getElementById('btn-resume').addEventListener('click', handleToiletResume);
+  document.getElementById('btn-toilet-stop').addEventListener('click', handleSubScreenStop);
 
   // 中断画面
   document.getElementById('btn-return').addEventListener('click', handleReturn);
+  document.getElementById('btn-interrupt-stop').addEventListener('click', handleSubScreenStop);
 
   // BAN画面
   document.getElementById('btn-ban-stop').addEventListener('click', handleBanStop);
@@ -569,6 +571,7 @@ function handleToilet() {
   if (state !== 'working') return;
   savedState = state;
   savedRemaining = remaining;
+  state = 'toilet';
   targetEndTime = 0;
   stopWorkerTimer();
   saveState();
@@ -576,12 +579,14 @@ function handleToilet() {
 }
 
 function handleToiletResume() {
+  var rem = savedRemaining;
   state = savedState;
-  preNotified = savedRemaining <= PRE_NOTIFY_SEC;
+  preNotified = rem <= PRE_NOTIFY_SEC;
   savedState = null;
+  savedRemaining = 0;
   showScreen('screen-timer');
   updateUI();
-  startTimer(savedRemaining);
+  startTimer(rem);
 }
 
 // ==========================================
@@ -591,6 +596,7 @@ function handleToiletResume() {
 function handleInterrupt() {
   if (state !== 'working') return;
   workElapsedAtInterrupt = WORK_SEC - remaining;
+  state = 'interrupted';
   targetEndTime = 0;
   stopWorkerTimer();
   saveState();
@@ -614,6 +620,7 @@ function updateInterruptActionText() {
 
 function handleReturn() {
   var elapsed = workElapsedAtInterrupt;
+  workElapsedAtInterrupt = 0;
 
   if (elapsed >= WORK_SEC) {
     // 作業は実質完了扱い
@@ -690,6 +697,10 @@ function handleStop() {
   }
 }
 
+function handleSubScreenStop() {
+  resetToIdle();
+}
+
 function handleBanStop() {
   stopWorkerTimer();
   resetToIdle();
@@ -724,6 +735,7 @@ function handleRestart() {
 }
 
 function handleResumeWork() {
+  initAudio();
   requestWakeLock();
   startWork();
 }
@@ -762,28 +774,42 @@ function recoverTimerState() {
   if (missedMs > 0) {
     // タイマー完了をキャッチアップ
     catchingUp = true;
-    var safety = 0;
-    while (targetEndTime && Date.now() >= targetEndTime && safety < 100) {
-      onTimerComplete();
-      if (state === 'idle' || state === 'completed' || state === 'ready') break;
-      safety++;
+    try {
+      var safety = 0;
+      while (targetEndTime && Date.now() >= targetEndTime && safety < 20) {
+        onTimerComplete();
+        if (state === 'idle' || state === 'completed' || state === 'ready') break;
+        safety++;
+      }
+    } finally {
+      catchingUp = false;
     }
-    catchingUp = false;
 
-    showCurrentScreen();
-
-    // まだタイマーが動くべき状態ならWorkerを再開
+    // まだタイマーが動くべき状態ならremainingを更新してからUI表示
     if (targetEndTime && Date.now() < targetEndTime) {
       remaining = Math.max(1, Math.ceil((targetEndTime - Date.now()) / 1000));
+      if (remaining <= PRE_NOTIFY_SEC && !preNotified) {
+        preNotified = true;
+        preNotify();
+      }
+      showCurrentScreen();
       worker.postMessage({ action: 'start', duration: remaining });
+    } else {
+      showCurrentScreen();
     }
 
-    // 復帰通知
-    playCompleteSound();
-    vibrateThrice();
+    // 復帰通知（終了済み状態でなければ鳴らす）
+    if (state !== 'idle' && state !== 'completed') {
+      playCompleteSound();
+      vibrateThrice();
+    }
   } else {
     // タイマーはまだ進行中
     remaining = Math.max(0, Math.ceil((targetEndTime - Date.now()) / 1000));
+    if (remaining <= PRE_NOTIFY_SEC && !preNotified) {
+      preNotified = true;
+      preNotify();
+    }
     showCurrentScreen();
     worker.postMessage({ action: 'start', duration: remaining });
   }
