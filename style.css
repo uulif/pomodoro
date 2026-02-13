@@ -3,18 +3,18 @@
    ========================================== */
 
 :root {
-  --bg: #0f172a;
-  --surface: #1e293b;
-  --text: #f1f5f9;
-  --text-sub: #94a3b8;
-  --work: #818cf8;
-  --work-bg: rgba(129, 140, 248, 0.1);
-  --break: #34d399;
-  --break-bg: rgba(52, 211, 153, 0.1);
-  --long-break: #a78bfa;
-  --long-break-bg: rgba(167, 139, 250, 0.1);
-  --ban: #f87171;
-  --ban-bg: rgba(248, 113, 113, 0.1);
+  --bg: #1a1f2e;
+  --surface: #262d3f;
+  --text: #f0f2f5;
+  --text-sub: #b0b8c8;
+  --work: #93a0ff;
+  --work-bg: rgba(147, 160, 255, 0.12);
+  --break: #4ee0a8;
+  --break-bg: rgba(78, 224, 168, 0.12);
+  --long-break: #b99cff;
+  --long-break-bg: rgba(185, 156, 255, 0.12);
+  --ban: #ff8080;
+  --ban-bg: rgba(255, 128, 128, 0.12);
   --btn-radius: 12px;
 }
 
@@ -331,8 +331,8 @@ details[open] > .rules-toggle::before {
 }
 
 .btn-interrupt {
-  border-color: #fbbf24;
-  color: #fbbf24;
+  border-color: #fcd34d;
+  color: #fcd34d;
 }
 
 /* 違反ボタン（独立行、物理的に離す） */
@@ -440,7 +440,7 @@ details[open] > .rules-toggle::before {
 .interrupt-info {
   font-family: "SF Mono", "Cascadia Code", "Consolas", monospace;
   font-size: 1.3rem;
-  color: #fbbf24;
+  color: #fcd34d;
 }
 
 .interrupt-action {
