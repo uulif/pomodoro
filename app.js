@@ -35,20 +35,27 @@ let stopConfirmTimeout = null;
 let violationPending = false;
 let violationConfirmTimeout = null;
 
+// セッション終了ダブルタップ確認（サブ画面共通）
+let sessionEndPending = false;
+let sessionEndTimeout = null;
+let activeSessionEndBtn = null;
+
 // Worker / Audio / Wake Lock
 let worker = null;
 let audioCtx = null;
 let wakeLock = null;
+let lastTickTime = 0;
+let watchdogId = null;
 
 // ==========================================
 // 初期化
 // ==========================================
 
 function init() {
-  worker = new Worker('timer-worker.js');
-  worker.onmessage = onWorkerMessage;
+  createWorker();
   setupEventListeners();
   document.addEventListener('visibilitychange', handleVisibilityChange);
+  window.addEventListener('storage', handleStorageEvent);
   registerSW();
 
   if (loadState()) {
@@ -79,17 +86,18 @@ function setupEventListeners() {
 
   // トイレ画面
   document.getElementById('btn-resume').addEventListener('click', handleToiletResume);
-  document.getElementById('btn-toilet-stop').addEventListener('click', handleSubScreenStop);
+  document.getElementById('btn-toilet-stop').addEventListener('click', handleSessionEnd);
 
   // 中断画面
   document.getElementById('btn-return').addEventListener('click', handleReturn);
-  document.getElementById('btn-interrupt-stop').addEventListener('click', handleSubScreenStop);
+  document.getElementById('btn-interrupt-stop').addEventListener('click', handleSessionEnd);
 
   // BAN画面
-  document.getElementById('btn-ban-stop').addEventListener('click', handleBanStop);
+  document.getElementById('btn-ban-stop').addEventListener('click', handleSessionEnd);
 
   // 再開画面
   document.getElementById('btn-resume-work').addEventListener('click', handleResumeWork);
+  document.getElementById('btn-resume-stop').addEventListener('click', handleSessionEnd);
 
   // 完了画面
   document.getElementById('btn-restart').addEventListener('click', handleRestart);
@@ -307,6 +315,7 @@ function showScreen(id) {
   ensureAudio();
   clearStopConfirm();
   clearViolationConfirm();
+  clearSessionEndConfirm();
   document.querySelectorAll('.screen').forEach(function (s) {
     s.classList.remove('active');
   });
@@ -330,6 +339,16 @@ function clearViolationConfirm() {
   if (btn) {
     btn.textContent = '違反';
     btn.classList.remove('violation-confirm');
+  }
+}
+
+function clearSessionEndConfirm() {
+  if (sessionEndTimeout) clearTimeout(sessionEndTimeout);
+  sessionEndPending = false;
+  if (activeSessionEndBtn) {
+    activeSessionEndBtn.textContent = 'セッションを終了';
+    activeSessionEndBtn.classList.remove('stop-confirm');
+    activeSessionEndBtn = null;
   }
 }
 
@@ -428,13 +447,15 @@ function startTimer(duration) {
   remaining = duration;
   preNotified = false;
   saveState();
-  if (!catchingUp) {
+  if (!catchingUp && worker) {
     worker.postMessage({ action: 'start', duration: duration });
+    startWatchdog();
   }
 }
 
 function stopWorkerTimer() {
-  worker.postMessage({ action: 'stop' });
+  if (worker) worker.postMessage({ action: 'stop' });
+  clearWatchdog();
 }
 
 // ==========================================
@@ -443,6 +464,7 @@ function stopWorkerTimer() {
 
 function onWorkerMessage(e) {
   var data = e.data;
+  lastTickTime = Date.now();
 
   if (data.type === 'tick') {
     remaining = data.remaining;
@@ -584,6 +606,7 @@ function handleToiletResume() {
   preNotified = rem <= PRE_NOTIFY_SEC;
   savedState = null;
   savedRemaining = 0;
+  remaining = rem;
   showScreen('screen-timer');
   updateUI();
   startTimer(rem);
@@ -697,13 +720,23 @@ function handleStop() {
   }
 }
 
-function handleSubScreenStop() {
-  resetToIdle();
-}
-
-function handleBanStop() {
-  stopWorkerTimer();
-  resetToIdle();
+function handleSessionEnd(e) {
+  var btn = e.currentTarget;
+  if (sessionEndPending && activeSessionEndBtn === btn) {
+    clearSessionEndConfirm();
+    // BAN画面はタイマー動作中なので停止が必要
+    if (btn.id === 'btn-ban-stop') stopWorkerTimer();
+    resetToIdle();
+  } else {
+    clearSessionEndConfirm();
+    sessionEndPending = true;
+    activeSessionEndBtn = btn;
+    btn.textContent = 'もう一度タップで終了';
+    btn.classList.add('stop-confirm');
+    sessionEndTimeout = setTimeout(function () {
+      clearSessionEndConfirm();
+    }, 3000);
+  }
 }
 
 function resetToIdle() {
@@ -718,11 +751,14 @@ function resetToIdle() {
   workElapsedAtInterrupt = 0;
   stopPending = false;
   violationPending = false;
+  sessionEndPending = false;
   catchingUp = false;
   clearSavedState();
+  clearWatchdog();
   releaseWakeLock();
   clearStopConfirm();
   clearViolationConfirm();
+  clearSessionEndConfirm();
   showScreen('screen-setup');
 }
 
@@ -773,6 +809,7 @@ function recoverTimerState() {
 
   if (missedMs > 0) {
     // タイマー完了をキャッチアップ
+    var stateBeforeCatchUp = state;
     catchingUp = true;
     try {
       var safety = 0;
@@ -785,6 +822,8 @@ function recoverTimerState() {
       catchingUp = false;
     }
 
+    var transitioned = (state !== stateBeforeCatchUp);
+
     // まだタイマーが動くべき状態ならremainingを更新してからUI表示
     if (targetEndTime && Date.now() < targetEndTime) {
       remaining = Math.max(1, Math.ceil((targetEndTime - Date.now()) / 1000));
@@ -794,12 +833,13 @@ function recoverTimerState() {
       }
       showCurrentScreen();
       worker.postMessage({ action: 'start', duration: remaining });
+      startWatchdog();
     } else {
       showCurrentScreen();
     }
 
-    // 復帰通知（終了済み状態でなければ鳴らす）
-    if (state !== 'idle' && state !== 'completed') {
+    // 復帰通知（状態遷移が発生した場合のみ）
+    if (transitioned && state !== 'idle' && state !== 'completed') {
       playCompleteSound();
       vibrateThrice();
     }
@@ -812,6 +852,7 @@ function recoverTimerState() {
     }
     showCurrentScreen();
     worker.postMessage({ action: 'start', duration: remaining });
+    startWatchdog();
   }
 }
 
@@ -873,6 +914,64 @@ function restoreSession() {
     default:
       recoverTimerState();
       break;
+  }
+}
+
+// ==========================================
+// Worker管理
+// ==========================================
+
+function createWorker() {
+  try { if (worker) worker.terminate(); } catch (e) { /* ignore */ }
+  try {
+    worker = new Worker('timer-worker.js');
+    worker.onmessage = onWorkerMessage;
+    worker.onerror = function () {
+      createWorker();
+      restartActiveTimer();
+    };
+  } catch (e) {
+    worker = null;
+  }
+}
+
+function restartActiveTimer() {
+  if (!worker) return;
+  if (targetEndTime && Date.now() < targetEndTime) {
+    var rem = Math.max(1, Math.ceil((targetEndTime - Date.now()) / 1000));
+    remaining = rem;
+    worker.postMessage({ action: 'start', duration: rem });
+    startWatchdog();
+  }
+}
+
+function startWatchdog() {
+  clearWatchdog();
+  lastTickTime = Date.now();
+  watchdogId = setInterval(function () {
+    if (targetEndTime && Date.now() < targetEndTime && Date.now() - lastTickTime > 5000) {
+      createWorker();
+      restartActiveTimer();
+    }
+  }, 5000);
+}
+
+function clearWatchdog() {
+  if (watchdogId) { clearInterval(watchdogId); watchdogId = null; }
+}
+
+// ==========================================
+// 複数タブ検出
+// ==========================================
+
+function handleStorageEvent(e) {
+  if (e.key === STORAGE_KEY && state !== 'idle') {
+    // 別タブがセッション状態を変更した
+    try { stopWorkerTimer(); } catch (err) { /* ignore */ }
+    clearWatchdog();
+    state = 'idle';
+    clearSavedState();
+    showScreen('screen-setup');
   }
 }
 
