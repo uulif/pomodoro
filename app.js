@@ -46,6 +46,8 @@ let audioCtx = null;
 let wakeLock = null;
 let lastTickTime = 0;
 let watchdogId = null;
+let workerRetryCount = 0;
+const MAX_WORKER_RETRIES = 3;
 
 // ==========================================
 // 初期化
@@ -753,6 +755,7 @@ function resetToIdle() {
   violationPending = false;
   sessionEndPending = false;
   catchingUp = false;
+  workerRetryCount = 0;
   clearSavedState();
   clearWatchdog();
   releaseWakeLock();
@@ -810,6 +813,7 @@ function recoverTimerState() {
   if (missedMs > 0) {
     // タイマー完了をキャッチアップ
     var stateBeforeCatchUp = state;
+    var cycleBeforeCatchUp = cycle;
     catchingUp = true;
     try {
       var safety = 0;
@@ -822,7 +826,7 @@ function recoverTimerState() {
       catchingUp = false;
     }
 
-    var transitioned = (state !== stateBeforeCatchUp);
+    var transitioned = (state !== stateBeforeCatchUp || cycle !== cycleBeforeCatchUp);
 
     // まだタイマーが動くべき状態ならremainingを更新してからUI表示
     if (targetEndTime && Date.now() < targetEndTime) {
@@ -832,7 +836,7 @@ function recoverTimerState() {
         preNotify();
       }
       showCurrentScreen();
-      worker.postMessage({ action: 'start', duration: remaining });
+      if (worker) worker.postMessage({ action: 'start', duration: remaining });
       startWatchdog();
     } else {
       showCurrentScreen();
@@ -851,7 +855,7 @@ function recoverTimerState() {
       preNotify();
     }
     showCurrentScreen();
-    worker.postMessage({ action: 'start', duration: remaining });
+    if (worker) worker.postMessage({ action: 'start', duration: remaining });
     startWatchdog();
   }
 }
@@ -925,10 +929,18 @@ function createWorker() {
   try { if (worker) worker.terminate(); } catch (e) { /* ignore */ }
   try {
     worker = new Worker('timer-worker.js');
-    worker.onmessage = onWorkerMessage;
+    worker.onmessage = function (e) {
+      workerRetryCount = 0;
+      onWorkerMessage(e);
+    };
     worker.onerror = function () {
-      createWorker();
-      restartActiveTimer();
+      workerRetryCount++;
+      if (workerRetryCount <= MAX_WORKER_RETRIES) {
+        createWorker();
+        restartActiveTimer();
+      } else {
+        worker = null;
+      }
     };
   } catch (e) {
     worker = null;
@@ -966,11 +978,26 @@ function clearWatchdog() {
 
 function handleStorageEvent(e) {
   if (e.key === STORAGE_KEY && state !== 'idle') {
-    // 別タブがセッション状態を変更した
+    // 別タブがセッション状態を変更した — 自タブのみ停止、localStorageは触らない
     try { stopWorkerTimer(); } catch (err) { /* ignore */ }
     clearWatchdog();
     state = 'idle';
-    clearSavedState();
+    cycle = 1;
+    currentSet = 1;
+    remaining = 0;
+    targetEndTime = 0;
+    preNotified = false;
+    savedState = null;
+    savedRemaining = 0;
+    workElapsedAtInterrupt = 0;
+    stopPending = false;
+    violationPending = false;
+    sessionEndPending = false;
+    catchingUp = false;
+    releaseWakeLock();
+    clearStopConfirm();
+    clearViolationConfirm();
+    clearSessionEndConfirm();
     showScreen('screen-setup');
   }
 }

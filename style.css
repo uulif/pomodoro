@@ -147,7 +147,7 @@ body {
 .btn-test {
   width: 100%;
   max-width: 280px;
-  height: 44px;
+  min-height: 48px;
   border: 1px solid var(--text-sub);
   border-radius: var(--btn-radius);
   background: transparent;
@@ -512,7 +512,7 @@ details[open] > .rules-toggle::before {
     margin-top: 8px;
   }
   .btn-action {
-    min-height: 44px;
+    min-height: 48px;
     padding: 0 14px;
     font-size: 0.8rem;
   }
