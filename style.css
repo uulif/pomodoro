@@ -308,24 +308,20 @@ details[open] > .rules-toggle::before {
   stroke-dasharray: 100;
   stroke-dashoffset: 0;
   transition: stroke-dashoffset 1s linear, stroke 0.3s ease;
-  filter: drop-shadow(0 0 6px var(--work));
 }
 
 /* フレーム — 状態別カラー */
 #screen-timer.state-short_break .timer-frame-progress,
 #screen-timer.state-interrupt_break .timer-frame-progress {
   stroke: var(--break);
-  filter: drop-shadow(0 0 6px var(--break));
 }
 
 #screen-timer.state-long_break .timer-frame-progress {
   stroke: var(--long-break);
-  filter: drop-shadow(0 0 6px var(--long-break));
 }
 
 #screen-ban .timer-frame-progress {
   stroke: var(--ban);
-  filter: drop-shadow(0 0 6px var(--ban));
 }
 
 /* ラストミニット — パルスアニメーション */
@@ -334,8 +330,8 @@ details[open] > .rules-toggle::before {
 }
 
 @keyframes frame-pulse {
-  0%, 100% { opacity: 1; stroke-width: 3; }
-  50% { opacity: 0.7; stroke-width: 5; }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
 
 .timer-display {
@@ -603,14 +599,19 @@ details[open] > .rules-toggle::before {
    デザインテーマ
    ========================================== */
 
-/* --- クリーン（デフォルト） --- */
+/* --- クリーン（デフォルト）: 極細線 + 大きな角丸 --- */
 .theme-clean .timer-display {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
   font-weight: 200;
   letter-spacing: 0.05em;
 }
 
-/* --- デジタル --- */
+.theme-clean .timer-frame-progress,
+.theme-clean .timer-frame-bg {
+  stroke-width: 1.5;
+}
+
+/* --- デジタル: 等幅フォント + 破線フレーム + 角なし --- */
 .theme-digital .timer-display {
   font-family: "Courier New", "Consolas", "SF Mono", monospace;
   font-weight: 400;
@@ -620,39 +621,46 @@ details[open] > .rules-toggle::before {
 
 .theme-digital .timer-frame-progress {
   stroke-linecap: butt;
+  stroke-width: 2;
+  rx: 0;
+  ry: 0;
 }
 
 .theme-digital .timer-frame-bg {
-  stroke: rgba(0, 0, 0, 0.1);
+  stroke-width: 1;
+  stroke-dasharray: 3 2;
+  stroke: rgba(0, 0, 0, 0.15);
+  rx: 0;
+  ry: 0;
 }
 
-/* --- ネオン --- */
+/* --- ネオン: フレームだけ淡くグロー + 数字はクリア --- */
 .theme-neon .timer-display {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   font-weight: 300;
   letter-spacing: 0.08em;
-  text-shadow: 0 0 16px currentColor;
 }
 
 .theme-neon .timer-frame-progress {
   stroke-width: 2;
-  filter: drop-shadow(0 0 6px var(--work)) drop-shadow(0 0 14px var(--work));
+  filter: drop-shadow(0 0 8px var(--work));
+}
+
+.theme-neon .timer-frame-bg {
+  stroke-width: 1;
+  stroke: rgba(79, 91, 213, 0.1);
 }
 
 .theme-neon.state-short_break .timer-frame-progress,
 .theme-neon.state-interrupt_break .timer-frame-progress {
-  filter: drop-shadow(0 0 6px var(--break)) drop-shadow(0 0 14px var(--break));
+  filter: drop-shadow(0 0 8px var(--break));
 }
 
 .theme-neon.state-long_break .timer-frame-progress {
-  filter: drop-shadow(0 0 6px var(--long-break)) drop-shadow(0 0 14px var(--long-break));
+  filter: drop-shadow(0 0 8px var(--long-break));
 }
 
-.theme-neon .timer-frame-bg {
-  stroke: rgba(79, 91, 213, 0.12);
-}
-
-/* --- ボールド --- */
+/* --- ボールド: 極太フレーム + 極太フォント + 小角丸 --- */
 .theme-bold .timer-display {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   font-weight: 900;
@@ -663,13 +671,17 @@ details[open] > .rules-toggle::before {
 .theme-bold .timer-frame-progress {
   stroke-width: 6;
   stroke-linecap: butt;
+  rx: 4;
+  ry: 4;
 }
 
 .theme-bold .timer-frame-bg {
   stroke-width: 6;
+  rx: 4;
+  ry: 4;
 }
 
-/* --- グラデーション --- */
+/* --- グラデーション: グラデ文字 + グラデフレーム + 中角丸 --- */
 .theme-gradient .timer-display {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   font-weight: 600;
@@ -678,6 +690,17 @@ details[open] > .rules-toggle::before {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+.theme-gradient .timer-frame-progress {
+  stroke: url(#gradient-work);
+  rx: 10;
+  ry: 10;
+}
+
+.theme-gradient .timer-frame-bg {
+  rx: 10;
+  ry: 10;
 }
 
 .theme-gradient.state-short_break .timer-display,
@@ -693,10 +716,6 @@ details[open] > .rules-toggle::before {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-}
-
-.theme-gradient .timer-frame-progress {
-  stroke: url(#gradient-work);
 }
 
 .theme-gradient.state-short_break .timer-frame-progress,
