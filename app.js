@@ -47,6 +47,8 @@ let wakeLock = null;
 let lastTickTime = 0;
 let watchdogId = null;
 let workerRetryCount = 0;
+let workerStableTimeout = null;
+let fallbackId = null;
 const MAX_WORKER_RETRIES = 3;
 
 // ==========================================
@@ -449,15 +451,20 @@ function startTimer(duration) {
   remaining = duration;
   preNotified = false;
   saveState();
-  if (!catchingUp && worker) {
-    worker.postMessage({ action: 'start', duration: duration });
-    startWatchdog();
+  if (!catchingUp) {
+    if (worker) {
+      worker.postMessage({ action: 'start', duration: duration });
+      startWatchdog();
+    } else {
+      startFallbackTimer();
+    }
   }
 }
 
 function stopWorkerTimer() {
   if (worker) worker.postMessage({ action: 'stop' });
   clearWatchdog();
+  clearFallbackTimer();
 }
 
 // ==========================================
@@ -756,8 +763,10 @@ function resetToIdle() {
   sessionEndPending = false;
   catchingUp = false;
   workerRetryCount = 0;
+  if (workerStableTimeout) { clearTimeout(workerStableTimeout); workerStableTimeout = null; }
   clearSavedState();
   clearWatchdog();
+  clearFallbackTimer();
   releaseWakeLock();
   clearStopConfirm();
   clearViolationConfirm();
@@ -930,20 +939,29 @@ function createWorker() {
   try {
     worker = new Worker('timer-worker.js');
     worker.onmessage = function (e) {
-      workerRetryCount = 0;
+      // 30秒安定動作後にリトライカウントをリセット（無限ループ防止）
+      if (workerRetryCount > 0 && !workerStableTimeout) {
+        workerStableTimeout = setTimeout(function () {
+          workerRetryCount = 0;
+          workerStableTimeout = null;
+        }, 30000);
+      }
       onWorkerMessage(e);
     };
     worker.onerror = function () {
+      if (workerStableTimeout) { clearTimeout(workerStableTimeout); workerStableTimeout = null; }
       workerRetryCount++;
       if (workerRetryCount <= MAX_WORKER_RETRIES) {
         createWorker();
         restartActiveTimer();
       } else {
         worker = null;
+        startFallbackTimer();
       }
     };
   } catch (e) {
     worker = null;
+    startFallbackTimer();
   }
 }
 
@@ -962,14 +980,51 @@ function startWatchdog() {
   lastTickTime = Date.now();
   watchdogId = setInterval(function () {
     if (targetEndTime && Date.now() < targetEndTime && Date.now() - lastTickTime > 5000) {
-      createWorker();
-      restartActiveTimer();
+      if (workerRetryCount >= MAX_WORKER_RETRIES) {
+        // Worker復旧不能 — フォールバックに切り替え
+        clearWatchdog();
+        startFallbackTimer();
+      } else {
+        createWorker();
+        restartActiveTimer();
+      }
     }
   }, 5000);
 }
 
 function clearWatchdog() {
   if (watchdogId) { clearInterval(watchdogId); watchdogId = null; }
+}
+
+// ==========================================
+// フォールバックタイマー（Worker全滅時）
+// ==========================================
+
+function startFallbackTimer() {
+  clearFallbackTimer();
+  if (!targetEndTime || Date.now() >= targetEndTime) return;
+  fallbackId = setInterval(function () {
+    if (!targetEndTime) { clearFallbackTimer(); return; }
+    var rem = Math.max(0, Math.ceil((targetEndTime - Date.now()) / 1000));
+    remaining = rem;
+    lastTickTime = Date.now();
+    if (remaining <= PRE_NOTIFY_SEC && !preNotified) {
+      preNotified = true;
+      preNotify();
+      saveState();
+    }
+    if (state === 'banned') { updateBanDisplay(); }
+    else { updateTimerDisplay(); }
+    if (rem <= 0) {
+      clearFallbackTimer();
+      completeNotify();
+      onTimerComplete();
+    }
+  }, 1000);
+}
+
+function clearFallbackTimer() {
+  if (fallbackId) { clearInterval(fallbackId); fallbackId = null; }
 }
 
 // ==========================================
@@ -981,6 +1036,7 @@ function handleStorageEvent(e) {
     // 別タブがセッション状態を変更した — 自タブのみ停止、localStorageは触らない
     try { stopWorkerTimer(); } catch (err) { /* ignore */ }
     clearWatchdog();
+    clearFallbackTimer();
     state = 'idle';
     cycle = 1;
     currentSet = 1;
