@@ -105,6 +105,7 @@ function setupEventListeners() {
     document.getElementById('screen-timer').classList.toggle('focus-mode', focusMode);
   });
 
+  document.getElementById('btn-timer-end').addEventListener('click', handleSessionEnd);
   document.getElementById('btn-toilet').addEventListener('click', handleToilet);
   document.getElementById('btn-interrupt').addEventListener('click', handleInterrupt);
   document.getElementById('btn-violation').addEventListener('click', handleViolation);
@@ -483,12 +484,13 @@ function updateUI() {
   // ドット
   updateCycleDots();
 
-  // ボタン表示（休憩中は全て非表示 = 強制・解除不可）
+  // ボタン表示（休憩中は作業系ボタン非表示 = スキップ不可）
   var isWorking = state === 'working';
   document.getElementById('btn-toilet').hidden = !isWorking;
   document.getElementById('btn-interrupt').hidden = !isWorking;
   document.getElementById('violation-row').hidden = !isWorking;
   document.getElementById('btn-stop').hidden = !isWorking;
+  document.getElementById('btn-timer-end').hidden = isWorking;
   document.getElementById('break-reminder').hidden = isWorking;
 
   updateTimerDisplay();
@@ -832,8 +834,8 @@ function handleSessionEnd(e) {
   var btn = e.currentTarget;
   if (sessionEndPending && activeSessionEndBtn === btn) {
     clearSessionEndConfirm();
-    // BAN画面はタイマー動作中なので停止が必要
-    if (btn.id === 'btn-ban-stop') stopWorkerTimer();
+    // タイマー動作中の画面は停止が必要
+    if (btn.id === 'btn-ban-stop' || btn.id === 'btn-timer-end') stopWorkerTimer();
     resetToIdle();
   } else {
     clearSessionEndConfirm();
