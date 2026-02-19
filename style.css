@@ -279,7 +279,8 @@ details[open] > .rules-toggle::before {
 
 .timer-frame-container {
   position: relative;
-  width: clamp(240px, 70vw, 340px);
+  width: clamp(260px, 80vw, 380px);
+  aspect-ratio: 5 / 3;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -348,7 +349,6 @@ details[open] > .rules-toggle::before {
   transition: color 0.3s, font-size 0.3s;
   position: relative;
   z-index: 1;
-  padding: 20px 0;
 }
 
 .cycle-dots {
@@ -728,28 +728,27 @@ details[open] > .rules-toggle::before {
 }
 
 #screen-timer.focus-mode .timer-frame-container {
-  width: calc(100vw - 32px);
+  width: calc(100vw - 24px);
   transition: width 0.3s ease;
 }
 
 #screen-timer.focus-mode .timer-display {
-  font-size: clamp(6rem, 30vw, 14rem);
-  padding: 28px 0;
+  font-size: clamp(5rem, 22vw, 12rem);
 }
 
 /* 集中モード — テーマ別フォントサイズ補正 */
 #screen-timer.focus-mode.theme-bold .timer-display {
-  font-size: clamp(7rem, 34vw, 16rem);
+  font-size: clamp(5.5rem, 24vw, 13rem);
 }
 
 /* --- レスポンシブ --- */
 
 @media (max-height: 600px) {
   .timer-frame-container {
-    width: clamp(200px, 60vw, 280px);
+    width: clamp(200px, 55vw, 260px);
   }
   .timer-display {
-    font-size: clamp(2.5rem, 12vw, 3.5rem);
+    font-size: clamp(2rem, 10vw, 3rem);
   }
   .action-group {
     margin-top: 8px;
