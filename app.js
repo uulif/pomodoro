@@ -1,5 +1,5 @@
 // ==========================================
-// 松村式ポモドーロタイマー v3
+// 松村式ポモドーロタイマー v4
 // ==========================================
 
 // --- 定数 ---
@@ -11,7 +11,9 @@ const PRE_NOTIFY_SEC = 60;
 const CYCLES_PER_SET = 4;
 const STORAGE_KEY = 'matsumura-pomodoro';
 const THEME_KEY = 'matsumura-theme';
-const ABANDON_MS = 2 * 60 * 60 * 1000; // 2時間以上放置で破棄
+const PROGRESS_KEY = 'matsumura-progress';
+const ABANDON_MS = 2 * 60 * 60 * 1000;
+const BLOCK_COUNT = 40;
 
 // --- 状態 ---
 let state = 'idle';
@@ -25,6 +27,9 @@ let catchingUp = false;
 let currentPhaseDuration = 0;
 let focusMode = false;
 let currentTheme = 'clean';
+let currentProgress = 'frame';
+let focusInfoVisible = false;
+let blockElements = [];
 
 // トイレ
 let savedState = null;
@@ -39,7 +44,7 @@ let stopConfirmTimeout = null;
 let violationPending = false;
 let violationConfirmTimeout = null;
 
-// セッション終了ダブルタップ確認（サブ画面共通）
+// セッション終了ダブルタップ確認
 let sessionEndPending = false;
 let sessionEndTimeout = null;
 let activeSessionEndBtn = null;
@@ -62,6 +67,7 @@ const MAX_WORKER_RETRIES = 3;
 function init() {
   createWorker();
   loadTheme();
+  loadProgressStyle();
   setupEventListeners();
   document.addEventListener('visibilitychange', handleVisibilityChange);
   window.addEventListener('storage', handleStorageEvent);
@@ -73,7 +79,7 @@ function init() {
 }
 
 function setupEventListeners() {
-  // セットアップ画面
+  // セット数
   document.querySelectorAll('.set-btn').forEach(function (btn) {
     btn.addEventListener('click', function () {
       document.querySelectorAll('.set-btn').forEach(function (b) {
@@ -95,14 +101,31 @@ function setupEventListeners() {
     });
   });
 
+  // プログレス選択
+  document.querySelectorAll('.progress-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.progress-btn').forEach(function (b) {
+        b.classList.remove('selected');
+      });
+      btn.classList.add('selected');
+      setProgressStyle(btn.dataset.progress);
+    });
+  });
+
   document.getElementById('btn-start').addEventListener('click', startSession);
   document.getElementById('btn-test-notify').addEventListener('click', testNotification);
 
-  // タイマー画面 — 集中モード切替
+  // 集中モード切替
   document.querySelector('#screen-timer .timer-content').addEventListener('click', function (e) {
     if (e.target.closest('button')) return;
     focusMode = !focusMode;
     document.getElementById('screen-timer').classList.toggle('focus-mode', focusMode);
+  });
+
+  // 集中モード情報トグル
+  document.getElementById('btn-focus-info').addEventListener('click', function (e) {
+    e.stopPropagation();
+    toggleFocusInfo();
   });
 
   document.getElementById('btn-timer-end').addEventListener('click', handleSessionEnd);
@@ -111,22 +134,17 @@ function setupEventListeners() {
   document.getElementById('btn-violation').addEventListener('click', handleViolation);
   document.getElementById('btn-stop').addEventListener('click', handleStop);
 
-  // トイレ画面
   document.getElementById('btn-resume').addEventListener('click', handleToiletResume);
   document.getElementById('btn-toilet-stop').addEventListener('click', handleSessionEnd);
 
-  // 中断画面
   document.getElementById('btn-return').addEventListener('click', handleReturn);
   document.getElementById('btn-interrupt-stop').addEventListener('click', handleSessionEnd);
 
-  // BAN画面
   document.getElementById('btn-ban-stop').addEventListener('click', handleSessionEnd);
 
-  // 再開画面
   document.getElementById('btn-resume-work').addEventListener('click', handleResumeWork);
   document.getElementById('btn-resume-stop').addEventListener('click', handleSessionEnd);
 
-  // 完了画面
   document.getElementById('btn-restart').addEventListener('click', handleRestart);
 }
 
@@ -144,16 +162,12 @@ function setTheme(theme) {
   currentTheme = theme;
   var timerScreen = document.getElementById('screen-timer');
   var banScreen = document.getElementById('screen-ban');
-
-  // 既存テーマクラスを除去
   ['theme-clean', 'theme-digital', 'theme-neon', 'theme-bold', 'theme-gradient'].forEach(function (cls) {
     timerScreen.classList.remove(cls);
     banScreen.classList.remove(cls);
   });
-
   timerScreen.classList.add('theme-' + theme);
   banScreen.classList.add('theme-' + theme);
-
   localStorage.setItem(THEME_KEY, theme);
 }
 
@@ -161,12 +175,46 @@ function loadTheme() {
   var saved = localStorage.getItem(THEME_KEY);
   if (saved) {
     currentTheme = saved;
-    // ボタン選択状態を復元
     document.querySelectorAll('.theme-btn').forEach(function (btn) {
       btn.classList.toggle('selected', btn.dataset.theme === saved);
     });
   }
   setTheme(currentTheme);
+}
+
+// ==========================================
+// プログレススタイル管理
+// ==========================================
+
+function setProgressStyle(style) {
+  currentProgress = style;
+  var timerScreen = document.getElementById('screen-timer');
+  ['progress-frame', 'progress-bar', 'progress-color', 'progress-blocks', 'progress-hourglass'].forEach(function (cls) {
+    timerScreen.classList.remove(cls);
+  });
+  timerScreen.classList.add('progress-' + style);
+  localStorage.setItem(PROGRESS_KEY, style);
+
+  // カラーシフトでない場合、インラインスタイルをリセット
+  if (style !== 'color') {
+    resetColorShift();
+  }
+
+  // ブロック初期化
+  if (style === 'blocks') {
+    initBlocks();
+  }
+}
+
+function loadProgressStyle() {
+  var saved = localStorage.getItem(PROGRESS_KEY);
+  if (saved) {
+    currentProgress = saved;
+    document.querySelectorAll('.progress-btn').forEach(function (btn) {
+      btn.classList.toggle('selected', btn.dataset.progress === saved);
+    });
+  }
+  setProgressStyle(currentProgress);
 }
 
 // ==========================================
@@ -248,12 +296,10 @@ function playTone(freq, duration, volume, delay) {
   osc.stop(startTime + duration);
 }
 
-// 予告音：柔らかい単音
 function playPreSound() {
   playTone(523, 0.4, 0.2, 0);
 }
 
-// 到達音：3回ビープ（バイブと同期）
 function playCompleteSound() {
   playTone(880, 0.2, 0.4, 0);
   playTone(880, 0.2, 0.4, 0.3);
@@ -292,7 +338,7 @@ function vibrateThrice() {
 }
 
 // ==========================================
-// 通知（2段階）
+// 通知
 // ==========================================
 
 function preNotify() {
@@ -359,7 +405,7 @@ function requestWakeLock() {
   navigator.wakeLock.request('screen').then(function (lock) {
     wakeLock = lock;
     wakeLock.addEventListener('release', function () { wakeLock = null; });
-  }).catch(function () { /* not available */ });
+  }).catch(function () {});
 }
 
 function releaseWakeLock() {
@@ -453,14 +499,12 @@ function updateCycleDots() {
 function updateUI() {
   var timerScreen = document.getElementById('screen-timer');
 
-  // state-* クラスの差し替え
   var classes = Array.from(timerScreen.classList);
   classes.forEach(function (c) {
     if (c.indexOf('state-') === 0) timerScreen.classList.remove(c);
   });
   timerScreen.classList.add('state-' + state);
 
-  // 状態ラベル
   var labels = {
     working: '作業中',
     short_break: '休憩中',
@@ -469,11 +513,9 @@ function updateUI() {
   };
   document.getElementById('state-label').textContent = labels[state] || '';
 
-  // サイクル
   document.getElementById('cycle-label').textContent =
     'サイクル ' + cycle + ' / ' + CYCLES_PER_SET;
 
-  // セット
   if (totalSets === 0) {
     document.getElementById('set-label').textContent = 'セット ' + currentSet;
   } else {
@@ -481,10 +523,8 @@ function updateUI() {
       'セット ' + currentSet + ' / ' + totalSets;
   }
 
-  // ドット
   updateCycleDots();
 
-  // ボタン表示（休憩中は作業系ボタン非表示 = スキップ不可）
   var isWorking = state === 'working';
   document.getElementById('btn-toilet').hidden = !isWorking;
   document.getElementById('btn-interrupt').hidden = !isWorking;
@@ -494,13 +534,25 @@ function updateUI() {
   document.getElementById('break-reminder').hidden = isWorking;
 
   updateTimerDisplay();
-  updateProgressFrame();
+  updateProgress();
+  updateFocusInfo();
 }
 
 // ==========================================
-// プログレスフレーム
+// プログレス更新（統合ディスパッチャ）
 // ==========================================
 
+function updateProgress() {
+  switch (currentProgress) {
+    case 'frame': updateProgressFrame(); break;
+    case 'bar': updateProgressBar(); break;
+    case 'color': updateColorShift(); break;
+    case 'blocks': updateBlockProgress(); break;
+    case 'hourglass': updateHourglass(); break;
+  }
+}
+
+// --- フレーム ---
 function updateProgressFrame() {
   var frameEl = document.getElementById('timer-frame-progress');
   if (!frameEl) return;
@@ -515,6 +567,94 @@ function updateProgressFrame() {
   }
 }
 
+// --- バー ---
+function updateProgressBar() {
+  var fill = document.getElementById('progress-bar-fill');
+  if (!fill) return;
+  var progress = currentPhaseDuration > 0 ? remaining / currentPhaseDuration : 1;
+  fill.style.width = (Math.max(0, Math.min(1, progress)) * 100) + '%';
+}
+
+// --- カラーシフト ---
+function updateColorShift() {
+  var display = document.getElementById('timer-display');
+  if (!display) return;
+  var progress = currentPhaseDuration > 0 ? remaining / currentPhaseDuration : 1;
+  var color = getShiftColor(progress);
+  display.style.color = color;
+  display.style.webkitTextFillColor = color;
+  display.style.background = 'none';
+}
+
+function getShiftColor(progress) {
+  progress = Math.max(0, Math.min(1, progress));
+  var hue;
+  if (progress > 0.3) {
+    var t = (progress - 0.3) / 0.7;
+    hue = 40 + t * 185;
+  } else {
+    var t = progress / 0.3;
+    hue = t * 40;
+  }
+  return 'hsl(' + Math.round(hue) + ', 75%, 52%)';
+}
+
+function resetColorShift() {
+  var display = document.getElementById('timer-display');
+  if (!display) return;
+  display.style.color = '';
+  display.style.webkitTextFillColor = '';
+  display.style.background = '';
+}
+
+// --- ブロック ---
+function initBlocks() {
+  var container = document.getElementById('progress-blocks');
+  if (!container || container.children.length === BLOCK_COUNT) return;
+  container.innerHTML = '';
+  blockElements = [];
+  for (var i = 0; i < BLOCK_COUNT; i++) {
+    var block = document.createElement('span');
+    block.className = 'progress-block';
+    container.appendChild(block);
+    blockElements.push(block);
+  }
+}
+
+function updateBlockProgress() {
+  if (blockElements.length === 0) initBlocks();
+  var progress = currentPhaseDuration > 0 ? remaining / currentPhaseDuration : 1;
+  var visible = Math.ceil(BLOCK_COUNT * Math.max(0, Math.min(1, progress)));
+  for (var i = 0; i < BLOCK_COUNT; i++) {
+    blockElements[i].classList.toggle('block-empty', i >= visible);
+  }
+}
+
+// --- ネオン砂時計 ---
+function updateHourglass() {
+  var progress = currentPhaseDuration > 0 ? remaining / currentPhaseDuration : 1;
+  progress = Math.max(0, Math.min(1, progress));
+
+  var sandTop = document.getElementById('hg-sand-top');
+  var sandBottom = document.getElementById('hg-sand-bottom');
+  var stream = document.getElementById('hg-stream');
+
+  if (!sandTop || !sandBottom) return;
+
+  var topH = 47 * progress;
+  sandTop.setAttribute('y', 5 + 47 - topH);
+  sandTop.setAttribute('height', topH);
+
+  var bottomH = 47 * (1 - progress);
+  sandBottom.setAttribute('y', 115 - bottomH);
+  sandBottom.setAttribute('height', bottomH);
+
+  if (stream) {
+    stream.style.opacity = (progress > 0.01 && progress < 0.99) ? '0.4' : '0';
+  }
+}
+
+// --- BAN画面フレーム（常にフレーム使用） ---
 function updateBanFrame() {
   var frameEl = document.getElementById('ban-frame-progress');
   if (!frameEl) return;
@@ -530,12 +670,33 @@ function updateBanFrame() {
 }
 
 // ==========================================
+// 集中モード情報トグル
+// ==========================================
+
+function toggleFocusInfo() {
+  focusInfoVisible = !focusInfoVisible;
+  updateFocusInfo();
+}
+
+function updateFocusInfo() {
+  var btn = document.getElementById('btn-focus-info');
+  if (!btn) return;
+  if (focusInfoVisible) {
+    var setText = totalSets === 0
+      ? 'S' + currentSet
+      : 'S' + currentSet + '/' + totalSets;
+    btn.textContent = setText + ' C' + cycle + '/' + CYCLES_PER_SET;
+  } else {
+    btn.textContent = '\u2139';
+  }
+}
+
+// ==========================================
 // タイマー制御
 // ==========================================
 
 function startTimer(duration) {
   if (catchingUp) {
-    // キャッチアップ中は前回の終了時刻から連鎖
     targetEndTime = targetEndTime + duration * 1000;
   } else {
     targetEndTime = Date.now() + duration * 1000;
@@ -579,7 +740,7 @@ function onWorkerMessage(e) {
       updateBanFrame();
     } else {
       updateTimerDisplay();
-      updateProgressFrame();
+      updateProgress();
     }
   }
 
@@ -721,7 +882,7 @@ function handleToiletResume() {
 }
 
 // ==========================================
-// 外的中断（緊急中断）
+// 外的中断
 // ==========================================
 
 function handleInterrupt() {
@@ -754,7 +915,6 @@ function handleReturn() {
   workElapsedAtInterrupt = 0;
 
   if (elapsed >= WORK_SEC) {
-    // 作業は実質完了扱い
     state = 'working';
     onTimerComplete();
   } else if (elapsed <= 5 * 60) {
@@ -779,12 +939,11 @@ function handleReturn() {
 }
 
 // ==========================================
-// 内的中断（違反） ダブルタップ確認
+// 違反
 // ==========================================
 
 function handleViolation() {
   if (state !== 'working') return;
-
   var btn = document.getElementById('btn-violation');
   if (violationPending) {
     clearTimeout(violationConfirmTimeout);
@@ -806,12 +965,11 @@ function handleViolation() {
 }
 
 // ==========================================
-// 停止（ダブルタップ確認）
+// 停止
 // ==========================================
 
 function handleStop() {
   if (state === 'short_break' || state === 'long_break' || state === 'interrupt_break') return;
-
   var btn = document.getElementById('btn-stop');
   if (stopPending) {
     clearTimeout(stopConfirmTimeout);
@@ -834,7 +992,6 @@ function handleSessionEnd(e) {
   var btn = e.currentTarget;
   if (sessionEndPending && activeSessionEndBtn === btn) {
     clearSessionEndConfirm();
-    // タイマー動作中の画面は停止が必要
     if (btn.id === 'btn-ban-stop' || btn.id === 'btn-timer-end') stopWorkerTimer();
     resetToIdle();
   } else {
@@ -865,7 +1022,9 @@ function resetToIdle() {
   catchingUp = false;
   currentPhaseDuration = 0;
   focusMode = false;
+  focusInfoVisible = false;
   document.getElementById('screen-timer').classList.remove('focus-mode');
+  resetColorShift();
   workerRetryCount = 0;
   if (workerStableTimeout) { clearTimeout(workerStableTimeout); workerStableTimeout = null; }
   clearSavedState();
@@ -879,7 +1038,7 @@ function resetToIdle() {
 }
 
 // ==========================================
-// 再スタート・再開
+// 再スタート
 // ==========================================
 
 function handleRestart() {
@@ -899,12 +1058,10 @@ function handleResumeWork() {
 function handleVisibilityChange() {
   if (document.visibilityState !== 'visible') return;
   ensureAudio();
-
   if (state === 'idle' || state === 'completed') return;
   requestWakeLock();
   if (state === 'toilet' || state === 'interrupted' || state === 'ready') return;
   if (!targetEndTime) return;
-
   stopWorkerTimer();
   recoverTimerState();
 }
@@ -917,14 +1074,12 @@ function recoverTimerState() {
 
   var missedMs = Date.now() - targetEndTime;
 
-  // 2時間以上放置はセッション破棄
   if (missedMs > ABANDON_MS) {
     resetToIdle();
     return;
   }
 
   if (missedMs > 0) {
-    // タイマー完了をキャッチアップ
     var stateBeforeCatchUp = state;
     var cycleBeforeCatchUp = cycle;
     catchingUp = true;
@@ -941,7 +1096,6 @@ function recoverTimerState() {
 
     var transitioned = (state !== stateBeforeCatchUp || cycle !== cycleBeforeCatchUp);
 
-    // まだタイマーが動くべき状態ならremainingを更新してからUI表示
     if (targetEndTime && Date.now() < targetEndTime) {
       remaining = Math.max(1, Math.ceil((targetEndTime - Date.now()) / 1000));
       if (remaining <= PRE_NOTIFY_SEC && !preNotified) {
@@ -955,13 +1109,11 @@ function recoverTimerState() {
       showCurrentScreen();
     }
 
-    // 復帰通知（状態遷移が発生した場合のみ）
     if (transitioned && state !== 'idle' && state !== 'completed') {
       playCompleteSound();
       vibrateThrice();
     }
   } else {
-    // タイマーはまだ進行中
     remaining = Math.max(0, Math.ceil((targetEndTime - Date.now()) / 1000));
     if (remaining <= PRE_NOTIFY_SEC && !preNotified) {
       preNotified = true;
@@ -1000,35 +1152,30 @@ function showCurrentScreen() {
 }
 
 // ==========================================
-// セッション復元（ページリロード時）
+// セッション復元
 // ==========================================
 
 function restoreSession() {
   initAudio();
   requestWakeLock();
-
   switch (state) {
     case 'toilet':
       showScreen('screen-toilet');
       break;
-
     case 'interrupted':
       showScreen('screen-interrupt');
       document.getElementById('interrupt-elapsed').textContent =
         '作業経過: ' + formatTime(workElapsedAtInterrupt);
       updateInterruptActionText();
       break;
-
     case 'ready':
       document.getElementById('resume-info').textContent =
         'セット ' + currentSet + ' - サイクル ' + cycle;
       showScreen('screen-resume');
       break;
-
     case 'completed':
       showScreen('screen-complete');
       break;
-
     default:
       recoverTimerState();
       break;
@@ -1040,11 +1187,10 @@ function restoreSession() {
 // ==========================================
 
 function createWorker() {
-  try { if (worker) worker.terminate(); } catch (e) { /* ignore */ }
+  try { if (worker) worker.terminate(); } catch (e) {}
   try {
     worker = new Worker('timer-worker.js');
     worker.onmessage = function (e) {
-      // 30秒安定動作後にリトライカウントをリセット（無限ループ防止）
       if (workerRetryCount > 0 && !workerStableTimeout) {
         workerStableTimeout = setTimeout(function () {
           workerRetryCount = 0;
@@ -1086,7 +1232,6 @@ function startWatchdog() {
   watchdogId = setInterval(function () {
     if (targetEndTime && Date.now() < targetEndTime && Date.now() - lastTickTime > 5000) {
       if (workerRetryCount >= MAX_WORKER_RETRIES) {
-        // Worker復旧不能 — フォールバックに切り替え
         clearWatchdog();
         startFallbackTimer();
       } else {
@@ -1102,7 +1247,7 @@ function clearWatchdog() {
 }
 
 // ==========================================
-// フォールバックタイマー（Worker全滅時）
+// フォールバックタイマー
 // ==========================================
 
 function startFallbackTimer() {
@@ -1119,7 +1264,7 @@ function startFallbackTimer() {
       saveState();
     }
     if (state === 'banned') { updateBanDisplay(); updateBanFrame(); }
-    else { updateTimerDisplay(); updateProgressFrame(); }
+    else { updateTimerDisplay(); updateProgress(); }
     if (rem <= 0) {
       clearFallbackTimer();
       completeNotify();
@@ -1138,8 +1283,7 @@ function clearFallbackTimer() {
 
 function handleStorageEvent(e) {
   if (e.key === STORAGE_KEY && state !== 'idle') {
-    // 別タブがセッション状態を変更した — 自タブのみ停止、localStorageは触らない
-    try { stopWorkerTimer(); } catch (err) { /* ignore */ }
+    try { stopWorkerTimer(); } catch (err) {}
     clearWatchdog();
     clearFallbackTimer();
     state = 'idle';
@@ -1155,6 +1299,7 @@ function handleStorageEvent(e) {
     violationPending = false;
     sessionEndPending = false;
     catchingUp = false;
+    resetColorShift();
     releaseWakeLock();
     clearStopConfirm();
     clearViolationConfirm();

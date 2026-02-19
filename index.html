@@ -39,6 +39,16 @@
           <button class="theme-btn" data-theme="gradient">グラデ</button>
         </div>
       </div>
+      <div class="progress-selector">
+        <div class="set-heading">プログレス</div>
+        <div class="progress-options">
+          <button class="progress-btn selected" data-progress="frame">フレーム</button>
+          <button class="progress-btn" data-progress="bar">バー</button>
+          <button class="progress-btn" data-progress="color">カラー</button>
+          <button class="progress-btn" data-progress="blocks">ブロック</button>
+          <button class="progress-btn" data-progress="hourglass">砂時計</button>
+        </div>
+      </div>
       <button id="btn-start" class="btn-primary">スタート</button>
       <button id="btn-test-notify" class="btn-test">通知テスト</button>
       <details class="rules-section">
@@ -75,6 +85,27 @@
         </svg>
         <div id="timer-display" class="timer-display">25:00</div>
       </div>
+      <div class="progress-bar-track">
+        <div id="progress-bar-fill" class="progress-bar-fill"></div>
+      </div>
+      <div id="progress-blocks" class="progress-blocks"></div>
+      <div class="progress-hourglass-container">
+        <svg class="progress-hourglass-svg" viewBox="0 0 80 120">
+          <defs>
+            <clipPath id="hg-clip-top">
+              <polygon points="10,5 70,5 44,52 36,52"/>
+            </clipPath>
+            <clipPath id="hg-clip-bottom">
+              <polygon points="36,68 44,68 70,115 10,115"/>
+            </clipPath>
+          </defs>
+          <rect id="hg-sand-top" clip-path="url(#hg-clip-top)" x="0" y="5" width="80" height="47" opacity="0.15"/>
+          <rect id="hg-sand-bottom" clip-path="url(#hg-clip-bottom)" x="0" y="115" width="80" height="0" opacity="0.15"/>
+          <path d="M10,5 L70,5 L44,52 L44,68 L70,115 L10,115 L36,68 L36,52 Z" fill="none" stroke-width="1.5" stroke-linejoin="round"/>
+          <line id="hg-stream" x1="40" y1="56" x2="40" y2="64" stroke-width="1" opacity="0"/>
+        </svg>
+      </div>
+      <button id="btn-focus-info" class="btn-focus-info">ℹ</button>
       <div id="cycle-dots" class="cycle-dots"></div>
       <div id="set-label" class="set-label-info">セット 1</div>
       <div id="break-reminder" class="break-reminder" hidden>受動的快楽か、何もしないこと</div>

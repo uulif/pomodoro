@@ -1,5 +1,5 @@
 /* ==========================================
-   松村式ポモドーロタイマー - スタイル v3
+   松村式ポモドーロタイマー - スタイル v4
    ========================================== */
 
 :root {
@@ -82,7 +82,8 @@ body {
 }
 
 .set-selector,
-.theme-selector {
+.theme-selector,
+.progress-selector {
   width: 100%;
   background: var(--surface);
   border-radius: 16px;
@@ -128,16 +129,18 @@ body {
   color: var(--work);
 }
 
-/* --- テーマ選択 --- */
+/* --- テーマ・プログレス選択 --- */
 
-.theme-options {
+.theme-options,
+.progress-options {
   display: flex;
   gap: 6px;
   justify-content: center;
   flex-wrap: wrap;
 }
 
-.theme-btn {
+.theme-btn,
+.progress-btn {
   padding: 8px 14px;
   border: 2px solid var(--text-sub);
   border-radius: var(--btn-radius);
@@ -149,7 +152,8 @@ body {
   transition: all 0.2s;
 }
 
-.theme-btn.selected {
+.theme-btn.selected,
+.progress-btn.selected {
   border-color: var(--work);
   background: var(--work-bg);
   color: var(--work);
@@ -347,6 +351,170 @@ details[open] > .rules-toggle::before {
   z-index: 1;
 }
 
+/* --- 非フレーム時：フレーム非表示、コンテナ制約解除 --- */
+
+#screen-timer:not(.progress-frame) .timer-frame {
+  display: none;
+}
+
+#screen-timer:not(.progress-frame) .timer-frame-container {
+  aspect-ratio: unset;
+  width: auto;
+}
+
+/* --- プログレスバー --- */
+
+.progress-bar-track {
+  display: none;
+  width: clamp(200px, 70vw, 320px);
+  height: 4px;
+  background: var(--surface);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+#screen-timer.progress-bar .progress-bar-track {
+  display: block;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  width: 100%;
+  background: var(--work);
+  border-radius: 2px;
+  transition: width 1s linear;
+}
+
+.state-short_break .progress-bar-fill,
+.state-interrupt_break .progress-bar-fill {
+  background: var(--break);
+}
+
+.state-long_break .progress-bar-fill {
+  background: var(--long-break);
+}
+
+/* --- プログレスブロック --- */
+
+.progress-blocks {
+  display: none;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 3px;
+  width: clamp(160px, 45vw, 220px);
+}
+
+#screen-timer.progress-blocks .progress-blocks {
+  display: grid;
+}
+
+.progress-block {
+  aspect-ratio: 1;
+  border-radius: 2px;
+  background: var(--work);
+  transition: opacity 0.3s;
+}
+
+.progress-block.block-empty {
+  opacity: 0.08;
+}
+
+.state-short_break .progress-block,
+.state-interrupt_break .progress-block {
+  background: var(--break);
+}
+
+.state-long_break .progress-block {
+  background: var(--long-break);
+}
+
+/* --- ネオン砂時計 --- */
+
+.progress-hourglass-container {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: clamp(60px, 18vw, 90px);
+}
+
+#screen-timer.progress-hourglass .progress-hourglass-container {
+  display: flex;
+}
+
+.progress-hourglass-svg {
+  width: 100%;
+  height: auto;
+}
+
+.progress-hourglass-svg path {
+  stroke: var(--work);
+}
+
+.progress-hourglass-svg rect {
+  fill: var(--work);
+}
+
+.progress-hourglass-svg line {
+  stroke: var(--work);
+}
+
+.state-short_break .progress-hourglass-svg path,
+.state-short_break .progress-hourglass-svg line,
+.state-interrupt_break .progress-hourglass-svg path,
+.state-interrupt_break .progress-hourglass-svg line {
+  stroke: var(--break);
+}
+
+.state-short_break .progress-hourglass-svg rect,
+.state-interrupt_break .progress-hourglass-svg rect {
+  fill: var(--break);
+}
+
+.state-long_break .progress-hourglass-svg path,
+.state-long_break .progress-hourglass-svg line {
+  stroke: var(--long-break);
+}
+
+.state-long_break .progress-hourglass-svg rect {
+  fill: var(--long-break);
+}
+
+/* ネオンテーマ時の砂時計グロー */
+.theme-neon .progress-hourglass-svg path {
+  filter: drop-shadow(0 0 8px var(--work));
+}
+
+.theme-neon.state-short_break .progress-hourglass-svg path,
+.theme-neon.state-interrupt_break .progress-hourglass-svg path {
+  filter: drop-shadow(0 0 8px var(--break));
+}
+
+.theme-neon.state-long_break .progress-hourglass-svg path {
+  filter: drop-shadow(0 0 8px var(--long-break));
+}
+
+/* --- 集中モード情報ボタン --- */
+
+.btn-focus-info {
+  display: none;
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 12px) + 8px);
+  right: 16px;
+  z-index: 10;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--text-sub);
+  font-size: 0.7rem;
+  cursor: pointer;
+}
+
+#screen-timer.focus-mode .btn-focus-info {
+  display: block;
+}
+
 .cycle-dots {
   display: flex;
   gap: 12px;
@@ -428,8 +596,6 @@ details[open] > .rules-toggle::before {
   color: #f0b030;
 }
 
-/* 違反ボタン（独立行、物理的に離す） */
-
 .violation-row {
   margin-top: 12px;
 }
@@ -443,8 +609,6 @@ details[open] > .rules-toggle::before {
   background: var(--ban-bg);
   animation: blink 0.5s ease-in-out infinite;
 }
-
-/* 停止ボタン */
 
 .btn-stop {
   margin-top: 24px;
@@ -599,7 +763,7 @@ details[open] > .rules-toggle::before {
    デザインテーマ
    ========================================== */
 
-/* --- クリーン（デフォルト）: 極細線 + 大きな角丸 --- */
+/* --- クリーン（デフォルト）: 極細線 + 大角丸 --- */
 .theme-clean .timer-display {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
   font-weight: 200;
@@ -611,7 +775,7 @@ details[open] > .rules-toggle::before {
   stroke-width: 1.5;
 }
 
-/* --- デジタル: 等幅フォント + 破線フレーム + 角なし --- */
+/* --- デジタル: 等幅フォント + 角なし --- */
 .theme-digital .timer-display {
   font-family: "Courier New", "Consolas", "SF Mono", monospace;
   font-weight: 400;
@@ -628,13 +792,12 @@ details[open] > .rules-toggle::before {
 
 .theme-digital .timer-frame-bg {
   stroke-width: 1;
-  stroke-dasharray: 3 2;
   stroke: rgba(0, 0, 0, 0.15);
   rx: 0;
   ry: 0;
 }
 
-/* --- ネオン: フレームだけ淡くグロー + 数字はクリア --- */
+/* --- ネオン: フレームだけグロー --- */
 .theme-neon .timer-display {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   font-weight: 300;
@@ -660,7 +823,7 @@ details[open] > .rules-toggle::before {
   filter: drop-shadow(0 0 8px var(--long-break));
 }
 
-/* --- ボールド: 極太フレーム + 極太フォント + 小角丸 --- */
+/* --- ボールド: 極太 + 小角丸 --- */
 .theme-bold .timer-display {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   font-weight: 900;
@@ -681,7 +844,7 @@ details[open] > .rules-toggle::before {
   ry: 4;
 }
 
-/* --- グラデーション: グラデ文字 + グラデフレーム + 中角丸 --- */
+/* --- グラデーション --- */
 .theme-gradient .timer-display {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   font-weight: 600;
@@ -727,7 +890,9 @@ details[open] > .rules-toggle::before {
   stroke: url(#gradient-long);
 }
 
-/* --- 集中モード --- */
+/* ==========================================
+   集中モード
+   ========================================== */
 
 #screen-timer.focus-mode .state-label,
 #screen-timer.focus-mode .cycle-label,
@@ -746,18 +911,43 @@ details[open] > .rules-toggle::before {
   max-width: none;
 }
 
-#screen-timer.focus-mode .timer-frame-container {
+/* 集中モード: フレームスタイル */
+#screen-timer.focus-mode.progress-frame .timer-frame-container {
   width: calc(100vw - 24px);
   transition: width 0.3s ease;
 }
 
-#screen-timer.focus-mode .timer-display {
+#screen-timer.focus-mode.progress-frame .timer-display {
   font-size: clamp(5rem, 22vw, 12rem);
 }
 
-/* 集中モード — テーマ別フォントサイズ補正 */
-#screen-timer.focus-mode.theme-bold .timer-display {
+#screen-timer.focus-mode.progress-frame.theme-bold .timer-display {
   font-size: clamp(5.5rem, 24vw, 13rem);
+}
+
+/* 集中モード: 非フレームスタイル */
+#screen-timer.focus-mode:not(.progress-frame) .timer-display {
+  font-size: clamp(6rem, 32vw, 16rem);
+}
+
+#screen-timer.focus-mode:not(.progress-frame).theme-bold .timer-display {
+  font-size: clamp(7rem, 36vw, 18rem);
+}
+
+/* 集中モード: バー */
+#screen-timer.focus-mode .progress-bar-track {
+  width: calc(100vw - 48px);
+}
+
+/* 集中モード: ブロック */
+#screen-timer.focus-mode .progress-blocks {
+  width: clamp(200px, 60vw, 320px);
+  gap: 5px;
+}
+
+/* 集中モード: 砂時計 */
+#screen-timer.focus-mode .progress-hourglass-container {
+  width: clamp(80px, 22vw, 130px);
 }
 
 /* --- レスポンシブ --- */
