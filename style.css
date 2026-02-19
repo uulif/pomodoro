@@ -614,17 +614,16 @@ details[open] > .rules-toggle::before {
 .theme-digital .timer-display {
   font-family: "Courier New", "Consolas", "SF Mono", monospace;
   font-weight: 400;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.15em;
   font-variant-numeric: tabular-nums;
 }
 
 .theme-digital .timer-frame-progress {
   stroke-linecap: butt;
-  rx: 0;
 }
 
 .theme-digital .timer-frame-bg {
-  rx: 0;
+  stroke: rgba(0, 0, 0, 0.1);
 }
 
 /* --- ネオン --- */
@@ -632,53 +631,42 @@ details[open] > .rules-toggle::before {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   font-weight: 300;
   letter-spacing: 0.08em;
-  text-shadow:
-    0 0 10px currentColor,
-    0 0 20px currentColor,
-    0 0 40px currentColor;
+  text-shadow: 0 0 16px currentColor;
 }
 
 .theme-neon .timer-frame-progress {
   stroke-width: 2;
-  filter:
-    drop-shadow(0 0 4px var(--work))
-    drop-shadow(0 0 8px var(--work))
-    drop-shadow(0 0 16px var(--work));
+  filter: drop-shadow(0 0 6px var(--work)) drop-shadow(0 0 14px var(--work));
 }
 
 .theme-neon.state-short_break .timer-frame-progress,
 .theme-neon.state-interrupt_break .timer-frame-progress {
-  filter:
-    drop-shadow(0 0 4px var(--break))
-    drop-shadow(0 0 8px var(--break))
-    drop-shadow(0 0 16px var(--break));
+  filter: drop-shadow(0 0 6px var(--break)) drop-shadow(0 0 14px var(--break));
 }
 
 .theme-neon.state-long_break .timer-frame-progress {
-  filter:
-    drop-shadow(0 0 4px var(--long-break))
-    drop-shadow(0 0 8px var(--long-break))
-    drop-shadow(0 0 16px var(--long-break));
+  filter: drop-shadow(0 0 6px var(--long-break)) drop-shadow(0 0 14px var(--long-break));
 }
 
 .theme-neon .timer-frame-bg {
-  stroke: rgba(79, 91, 213, 0.15);
+  stroke: rgba(79, 91, 213, 0.12);
 }
 
 /* --- ボールド --- */
 .theme-bold .timer-display {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  font-size: clamp(3.5rem, 16vw, 5.5rem);
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  font-size: clamp(3.8rem, 17vw, 6rem);
 }
 
 .theme-bold .timer-frame-progress {
-  stroke-width: 5;
+  stroke-width: 6;
+  stroke-linecap: butt;
 }
 
 .theme-bold .timer-frame-bg {
-  stroke-width: 5;
+  stroke-width: 6;
 }
 
 /* --- グラデーション --- */
@@ -729,21 +717,29 @@ details[open] > .rules-toggle::before {
 #screen-timer.focus-mode .break-reminder,
 #screen-timer.focus-mode .action-group,
 #screen-timer.focus-mode .violation-row,
-#screen-timer.focus-mode .btn-stop {
+#screen-timer.focus-mode .btn-stop,
+#screen-timer.focus-mode #btn-timer-end {
   display: none !important;
 }
 
 #screen-timer.focus-mode .timer-content {
   justify-content: center;
+  max-width: none;
 }
 
 #screen-timer.focus-mode .timer-frame-container {
-  width: min(90vw, 80vh);
+  width: calc(100vw - 32px);
   transition: width 0.3s ease;
 }
 
 #screen-timer.focus-mode .timer-display {
-  font-size: clamp(5rem, 25vw, 10rem);
+  font-size: clamp(6rem, 30vw, 14rem);
+  padding: 28px 0;
+}
+
+/* 集中モード — テーマ別フォントサイズ補正 */
+#screen-timer.focus-mode.theme-bold .timer-display {
+  font-size: clamp(7rem, 34vw, 16rem);
 }
 
 /* --- レスポンシブ --- */

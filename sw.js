@@ -1,4 +1,4 @@
-const CACHE_NAME = 'matsumura-pomodoro-v12';
+const CACHE_NAME = 'matsumura-pomodoro-v13';
 const ASSETS = [
   './',
   './index.html',
