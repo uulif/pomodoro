@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
   <title>松村式ポモドーロ</title>
-  <meta name="theme-color" content="#2b2d31">
+  <meta name="theme-color" content="#ffffff">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="manifest" href="manifest.json">
@@ -27,6 +27,16 @@
           <button class="set-btn" data-sets="3">3</button>
           <button class="set-btn" data-sets="4">4</button>
           <button class="set-btn" data-sets="0">&infin;</button>
+        </div>
+      </div>
+      <div class="theme-selector">
+        <div class="set-heading">デザイン</div>
+        <div class="theme-options">
+          <button class="theme-btn selected" data-theme="clean">クリーン</button>
+          <button class="theme-btn" data-theme="digital">デジタル</button>
+          <button class="theme-btn" data-theme="neon">ネオン</button>
+          <button class="theme-btn" data-theme="bold">ボールド</button>
+          <button class="theme-btn" data-theme="gradient">グラデ</button>
         </div>
       </div>
       <button id="btn-start" class="btn-primary">スタート</button>
@@ -58,10 +68,10 @@
     <div class="timer-content">
       <div id="state-label" class="state-label">作業中</div>
       <div id="cycle-label" class="cycle-label">サイクル 1 / 4</div>
-      <div class="timer-ring-container" id="timer-ring-container">
-        <svg class="timer-ring" viewBox="0 0 240 240">
-          <circle class="timer-ring-bg" cx="120" cy="120" r="108" />
-          <circle id="timer-ring-progress" class="timer-ring-progress" cx="120" cy="120" r="108" />
+      <div class="timer-frame-container" id="timer-frame-container">
+        <svg class="timer-frame" viewBox="0 0 250 150">
+          <rect class="timer-frame-bg" x="3" y="3" width="244" height="144" rx="16" pathLength="100" />
+          <rect id="timer-frame-progress" class="timer-frame-progress" x="3" y="3" width="244" height="144" rx="16" pathLength="100" />
         </svg>
         <div id="timer-display" class="timer-display">25:00</div>
       </div>
@@ -105,10 +115,10 @@
   <div id="screen-ban" class="screen">
     <div class="center-content">
       <div class="state-label state-ban">使用禁止</div>
-      <div class="timer-ring-container">
-        <svg class="timer-ring" viewBox="0 0 240 240">
-          <circle class="timer-ring-bg" cx="120" cy="120" r="108" />
-          <circle id="ban-ring-progress" class="timer-ring-progress" cx="120" cy="120" r="108" />
+      <div class="timer-frame-container">
+        <svg class="timer-frame" viewBox="0 0 250 150">
+          <rect class="timer-frame-bg" x="3" y="3" width="244" height="144" rx="16" pathLength="100" />
+          <rect id="ban-frame-progress" class="timer-frame-progress" x="3" y="3" width="244" height="144" rx="16" pathLength="100" />
         </svg>
         <div id="ban-timer" class="timer-display timer-ban">3:00</div>
       </div>
@@ -135,6 +145,24 @@
       <button id="btn-restart" class="btn-primary">もう一度</button>
     </div>
   </div>
+
+  <!-- グラデーションテーマ用SVG定義 -->
+  <svg style="position:absolute;width:0;height:0">
+    <defs>
+      <linearGradient id="gradient-work" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#667eea"/>
+        <stop offset="100%" stop-color="#764ba2"/>
+      </linearGradient>
+      <linearGradient id="gradient-break" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#11998e"/>
+        <stop offset="100%" stop-color="#38ef7d"/>
+      </linearGradient>
+      <linearGradient id="gradient-long" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#7c3aed"/>
+        <stop offset="100%" stop-color="#c084fc"/>
+      </linearGradient>
+    </defs>
+  </svg>
 
   <script src="app.js"></script>
 </body>

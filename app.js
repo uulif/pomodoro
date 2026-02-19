@@ -1,5 +1,5 @@
 // ==========================================
-// 松村式ポモドーロタイマー v2
+// 松村式ポモドーロタイマー v3
 // ==========================================
 
 // --- 定数 ---
@@ -10,8 +10,8 @@ const BAN_SEC = 3 * 60;
 const PRE_NOTIFY_SEC = 60;
 const CYCLES_PER_SET = 4;
 const STORAGE_KEY = 'matsumura-pomodoro';
+const THEME_KEY = 'matsumura-theme';
 const ABANDON_MS = 2 * 60 * 60 * 1000; // 2時間以上放置で破棄
-const RING_CIRCUMFERENCE = 2 * Math.PI * 108;
 
 // --- 状態 ---
 let state = 'idle';
@@ -24,6 +24,7 @@ let preNotified = false;
 let catchingUp = false;
 let currentPhaseDuration = 0;
 let focusMode = false;
+let currentTheme = 'clean';
 
 // トイレ
 let savedState = null;
@@ -60,6 +61,7 @@ const MAX_WORKER_RETRIES = 3;
 
 function init() {
   createWorker();
+  loadTheme();
   setupEventListeners();
   document.addEventListener('visibilitychange', handleVisibilityChange);
   window.addEventListener('storage', handleStorageEvent);
@@ -79,6 +81,17 @@ function setupEventListeners() {
       });
       btn.classList.add('selected');
       totalSets = parseInt(btn.dataset.sets);
+    });
+  });
+
+  // テーマ選択
+  document.querySelectorAll('.theme-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.theme-btn').forEach(function (b) {
+        b.classList.remove('selected');
+      });
+      btn.classList.add('selected');
+      setTheme(btn.dataset.theme);
     });
   });
 
@@ -120,6 +133,39 @@ function registerSW() {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js');
   }
+}
+
+// ==========================================
+// テーマ管理
+// ==========================================
+
+function setTheme(theme) {
+  currentTheme = theme;
+  var timerScreen = document.getElementById('screen-timer');
+  var banScreen = document.getElementById('screen-ban');
+
+  // 既存テーマクラスを除去
+  ['theme-clean', 'theme-digital', 'theme-neon', 'theme-bold', 'theme-gradient'].forEach(function (cls) {
+    timerScreen.classList.remove(cls);
+    banScreen.classList.remove(cls);
+  });
+
+  timerScreen.classList.add('theme-' + theme);
+  banScreen.classList.add('theme-' + theme);
+
+  localStorage.setItem(THEME_KEY, theme);
+}
+
+function loadTheme() {
+  var saved = localStorage.getItem(THEME_KEY);
+  if (saved) {
+    currentTheme = saved;
+    // ボタン選択状態を復元
+    document.querySelectorAll('.theme-btn').forEach(function (btn) {
+      btn.classList.toggle('selected', btn.dataset.theme === saved);
+    });
+  }
+  setTheme(currentTheme);
 }
 
 // ==========================================
@@ -446,38 +492,38 @@ function updateUI() {
   document.getElementById('break-reminder').hidden = isWorking;
 
   updateTimerDisplay();
-  updateProgressRing();
+  updateProgressFrame();
 }
 
 // ==========================================
-// プログレスリング
+// プログレスフレーム
 // ==========================================
 
-function updateProgressRing() {
-  var ringEl = document.getElementById('timer-ring-progress');
-  if (!ringEl) return;
+function updateProgressFrame() {
+  var frameEl = document.getElementById('timer-frame-progress');
+  if (!frameEl) return;
   var progress = currentPhaseDuration > 0 ? remaining / currentPhaseDuration : 1;
-  var offset = RING_CIRCUMFERENCE * (1 - Math.max(0, Math.min(1, progress)));
-  ringEl.style.strokeDasharray = RING_CIRCUMFERENCE;
-  ringEl.style.strokeDashoffset = offset;
+  var offset = 100 * (1 - Math.max(0, Math.min(1, progress)));
+  frameEl.style.strokeDasharray = '100';
+  frameEl.style.strokeDashoffset = offset;
   if (remaining <= PRE_NOTIFY_SEC && remaining > 0) {
-    ringEl.classList.add('last-minute');
+    frameEl.classList.add('last-minute');
   } else {
-    ringEl.classList.remove('last-minute');
+    frameEl.classList.remove('last-minute');
   }
 }
 
-function updateBanRing() {
-  var ringEl = document.getElementById('ban-ring-progress');
-  if (!ringEl) return;
+function updateBanFrame() {
+  var frameEl = document.getElementById('ban-frame-progress');
+  if (!frameEl) return;
   var progress = BAN_SEC > 0 ? remaining / BAN_SEC : 1;
-  var offset = RING_CIRCUMFERENCE * (1 - Math.max(0, Math.min(1, progress)));
-  ringEl.style.strokeDasharray = RING_CIRCUMFERENCE;
-  ringEl.style.strokeDashoffset = offset;
+  var offset = 100 * (1 - Math.max(0, Math.min(1, progress)));
+  frameEl.style.strokeDasharray = '100';
+  frameEl.style.strokeDashoffset = offset;
   if (remaining <= PRE_NOTIFY_SEC && remaining > 0) {
-    ringEl.classList.add('last-minute');
+    frameEl.classList.add('last-minute');
   } else {
-    ringEl.classList.remove('last-minute');
+    frameEl.classList.remove('last-minute');
   }
 }
 
@@ -528,10 +574,10 @@ function onWorkerMessage(e) {
     }
     if (state === 'banned') {
       updateBanDisplay();
-      updateBanRing();
+      updateBanFrame();
     } else {
       updateTimerDisplay();
-      updateProgressRing();
+      updateProgressFrame();
     }
   }
 
@@ -640,7 +686,7 @@ function startBan() {
   if (!catchingUp) {
     showScreen('screen-ban');
     updateBanDisplay();
-    updateBanRing();
+    updateBanFrame();
   }
   startTimer(BAN_SEC);
 }
@@ -942,7 +988,7 @@ function showCurrentScreen() {
     case 'banned':
       showScreen('screen-ban');
       updateBanDisplay();
-      updateBanRing();
+      updateBanFrame();
       break;
     default:
       showScreen('screen-timer');
@@ -1070,8 +1116,8 @@ function startFallbackTimer() {
       preNotify();
       saveState();
     }
-    if (state === 'banned') { updateBanDisplay(); updateBanRing(); }
-    else { updateTimerDisplay(); updateProgressRing(); }
+    if (state === 'banned') { updateBanDisplay(); updateBanFrame(); }
+    else { updateTimerDisplay(); updateProgressFrame(); }
     if (rem <= 0) {
       clearFallbackTimer();
       completeNotify();
