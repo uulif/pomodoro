@@ -272,6 +272,8 @@ details[open] > .rules-toggle::before {
   stroke: var(--work);
   stroke-width: 5;
   stroke-linecap: round;
+  stroke-dasharray: 678.58;
+  stroke-dashoffset: 0;
   transition: stroke-dashoffset 1s linear, stroke 0.3s ease;
   filter: drop-shadow(0 0 6px var(--work));
 }
@@ -582,13 +584,13 @@ details[open] > .rules-toggle::before {
 }
 
 #screen-timer.focus-mode .timer-ring-container {
-  width: clamp(280px, 85vw, 420px);
-  height: clamp(280px, 85vw, 420px);
+  width: min(90vw, 90vh);
+  height: min(90vw, 90vh);
   transition: width 0.3s ease, height 0.3s ease;
 }
 
 #screen-timer.focus-mode .timer-display {
-  font-size: clamp(4.5rem, 20vw, 7rem);
+  font-size: clamp(5rem, 25vw, 10rem);
 }
 
 /* --- レスポンシブ --- */
