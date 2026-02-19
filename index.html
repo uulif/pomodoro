@@ -58,7 +58,13 @@
     <div class="timer-content">
       <div id="state-label" class="state-label">作業中</div>
       <div id="cycle-label" class="cycle-label">サイクル 1 / 4</div>
-      <div id="timer-display" class="timer-display">25:00</div>
+      <div class="timer-ring-container" id="timer-ring-container">
+        <svg class="timer-ring" viewBox="0 0 240 240">
+          <circle class="timer-ring-bg" cx="120" cy="120" r="108" />
+          <circle id="timer-ring-progress" class="timer-ring-progress" cx="120" cy="120" r="108" />
+        </svg>
+        <div id="timer-display" class="timer-display">25:00</div>
+      </div>
       <div id="cycle-dots" class="cycle-dots"></div>
       <div id="set-label" class="set-label-info">セット 1</div>
       <div id="break-reminder" class="break-reminder" hidden>受動的快楽か、何もしないこと</div>
@@ -99,7 +105,13 @@
   <div id="screen-ban" class="screen">
     <div class="center-content">
       <div class="state-label state-ban">使用禁止</div>
-      <div id="ban-timer" class="timer-display timer-ban">3:00</div>
+      <div class="timer-ring-container">
+        <svg class="timer-ring" viewBox="0 0 240 240">
+          <circle class="timer-ring-bg" cx="120" cy="120" r="108" />
+          <circle id="ban-ring-progress" class="timer-ring-progress" cx="120" cy="120" r="108" />
+        </svg>
+        <div id="ban-timer" class="timer-display timer-ban">3:00</div>
+      </div>
       <div class="ban-message">内的中断 &#8212; ポモドーロ不成立</div>
       <button id="btn-ban-stop" class="btn-stop ban-stop-btn">セッションを終了</button>
     </div>

@@ -11,6 +11,7 @@ const PRE_NOTIFY_SEC = 60;
 const CYCLES_PER_SET = 4;
 const STORAGE_KEY = 'matsumura-pomodoro';
 const ABANDON_MS = 2 * 60 * 60 * 1000; // 2時間以上放置で破棄
+const RING_CIRCUMFERENCE = 2 * Math.PI * 108;
 
 // --- 状態 ---
 let state = 'idle';
@@ -21,6 +22,8 @@ let remaining = 0;
 let targetEndTime = 0;
 let preNotified = false;
 let catchingUp = false;
+let currentPhaseDuration = 0;
+let focusMode = false;
 
 // トイレ
 let savedState = null;
@@ -82,7 +85,13 @@ function setupEventListeners() {
   document.getElementById('btn-start').addEventListener('click', startSession);
   document.getElementById('btn-test-notify').addEventListener('click', testNotification);
 
-  // タイマー画面
+  // タイマー画面 — 集中モード切替
+  document.querySelector('#screen-timer .timer-content').addEventListener('click', function (e) {
+    if (e.target.closest('button')) return;
+    focusMode = !focusMode;
+    document.getElementById('screen-timer').classList.toggle('focus-mode', focusMode);
+  });
+
   document.getElementById('btn-toilet').addEventListener('click', handleToilet);
   document.getElementById('btn-interrupt').addEventListener('click', handleInterrupt);
   document.getElementById('btn-violation').addEventListener('click', handleViolation);
@@ -127,7 +136,8 @@ function saveState() {
     preNotified: preNotified,
     savedState: savedState,
     savedRemaining: savedRemaining,
-    workElapsedAtInterrupt: workElapsedAtInterrupt
+    workElapsedAtInterrupt: workElapsedAtInterrupt,
+    currentPhaseDuration: currentPhaseDuration
   };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
@@ -146,6 +156,7 @@ function loadState() {
     savedState = data.savedState || null;
     savedRemaining = data.savedRemaining || 0;
     workElapsedAtInterrupt = data.workElapsedAtInterrupt || 0;
+    currentPhaseDuration = data.currentPhaseDuration || 0;
     return state !== 'idle';
   } catch (e) {
     return false;
@@ -435,6 +446,39 @@ function updateUI() {
   document.getElementById('break-reminder').hidden = isWorking;
 
   updateTimerDisplay();
+  updateProgressRing();
+}
+
+// ==========================================
+// プログレスリング
+// ==========================================
+
+function updateProgressRing() {
+  var ringEl = document.getElementById('timer-ring-progress');
+  if (!ringEl) return;
+  var progress = currentPhaseDuration > 0 ? remaining / currentPhaseDuration : 1;
+  var offset = RING_CIRCUMFERENCE * (1 - Math.max(0, Math.min(1, progress)));
+  ringEl.style.strokeDasharray = RING_CIRCUMFERENCE;
+  ringEl.style.strokeDashoffset = offset;
+  if (remaining <= PRE_NOTIFY_SEC && remaining > 0) {
+    ringEl.classList.add('last-minute');
+  } else {
+    ringEl.classList.remove('last-minute');
+  }
+}
+
+function updateBanRing() {
+  var ringEl = document.getElementById('ban-ring-progress');
+  if (!ringEl) return;
+  var progress = BAN_SEC > 0 ? remaining / BAN_SEC : 1;
+  var offset = RING_CIRCUMFERENCE * (1 - Math.max(0, Math.min(1, progress)));
+  ringEl.style.strokeDasharray = RING_CIRCUMFERENCE;
+  ringEl.style.strokeDashoffset = offset;
+  if (remaining <= PRE_NOTIFY_SEC && remaining > 0) {
+    ringEl.classList.add('last-minute');
+  } else {
+    ringEl.classList.remove('last-minute');
+  }
 }
 
 // ==========================================
@@ -484,8 +528,10 @@ function onWorkerMessage(e) {
     }
     if (state === 'banned') {
       updateBanDisplay();
+      updateBanRing();
     } else {
       updateTimerDisplay();
+      updateProgressRing();
     }
   }
 
@@ -563,6 +609,7 @@ function startSession() {
 function startWork() {
   state = 'working';
   remaining = WORK_SEC;
+  currentPhaseDuration = WORK_SEC;
   if (!catchingUp) {
     showScreen('screen-timer');
     updateUI();
@@ -573,6 +620,7 @@ function startWork() {
 function startShortBreak() {
   state = 'short_break';
   remaining = SHORT_BREAK_SEC;
+  currentPhaseDuration = SHORT_BREAK_SEC;
   if (!catchingUp) updateUI();
   startTimer(SHORT_BREAK_SEC);
 }
@@ -580,6 +628,7 @@ function startShortBreak() {
 function startLongBreak() {
   state = 'long_break';
   remaining = LONG_BREAK_SEC;
+  currentPhaseDuration = LONG_BREAK_SEC;
   if (!catchingUp) updateUI();
   startTimer(LONG_BREAK_SEC);
 }
@@ -587,9 +636,11 @@ function startLongBreak() {
 function startBan() {
   state = 'banned';
   remaining = BAN_SEC;
+  currentPhaseDuration = BAN_SEC;
   if (!catchingUp) {
     showScreen('screen-ban');
     updateBanDisplay();
+    updateBanRing();
   }
   startTimer(BAN_SEC);
 }
@@ -663,6 +714,7 @@ function handleReturn() {
   } else if (elapsed <= 20 * 60) {
     state = 'interrupt_break';
     remaining = SHORT_BREAK_SEC;
+    currentPhaseDuration = SHORT_BREAK_SEC;
     showScreen('screen-timer');
     updateUI();
     startTimer(SHORT_BREAK_SEC);
@@ -670,6 +722,7 @@ function handleReturn() {
     state = 'working';
     var rem = WORK_SEC - elapsed;
     remaining = rem;
+    currentPhaseDuration = WORK_SEC;
     preNotified = rem <= PRE_NOTIFY_SEC;
     showScreen('screen-timer');
     updateUI();
@@ -762,6 +815,9 @@ function resetToIdle() {
   violationPending = false;
   sessionEndPending = false;
   catchingUp = false;
+  currentPhaseDuration = 0;
+  focusMode = false;
+  document.getElementById('screen-timer').classList.remove('focus-mode');
   workerRetryCount = 0;
   if (workerStableTimeout) { clearTimeout(workerStableTimeout); workerStableTimeout = null; }
   clearSavedState();
@@ -886,6 +942,7 @@ function showCurrentScreen() {
     case 'banned':
       showScreen('screen-ban');
       updateBanDisplay();
+      updateBanRing();
       break;
     default:
       showScreen('screen-timer');
@@ -1013,8 +1070,8 @@ function startFallbackTimer() {
       preNotify();
       saveState();
     }
-    if (state === 'banned') { updateBanDisplay(); }
-    else { updateTimerDisplay(); }
+    if (state === 'banned') { updateBanDisplay(); updateBanRing(); }
+    else { updateTimerDisplay(); updateProgressRing(); }
     if (rem <= 0) {
       clearFallbackTimer();
       completeNotify();

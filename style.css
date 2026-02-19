@@ -3,18 +3,18 @@
    ========================================== */
 
 :root {
-  --bg: #2b2d31;
-  --surface: #313338;
-  --text: #f2f3f5;
-  --text-sub: #b5bac1;
-  --work: #7983ff;
-  --work-bg: rgba(121, 131, 255, 0.15);
-  --break: #2dc770;
-  --break-bg: rgba(45, 199, 112, 0.15);
-  --long-break: #a17be0;
-  --long-break-bg: rgba(161, 123, 224, 0.15);
-  --ban: #e85d5d;
-  --ban-bg: rgba(232, 93, 93, 0.15);
+  --bg: #ffffff;
+  --surface: #f0f1f4;
+  --text: #1a1c20;
+  --text-sub: #5f6368;
+  --work: #4f5bd5;
+  --work-bg: rgba(79, 91, 213, 0.08);
+  --break: #1a9f56;
+  --break-bg: rgba(26, 159, 86, 0.08);
+  --long-break: #7c3aed;
+  --long-break-bg: rgba(124, 58, 237, 0.08);
+  --ban: #dc3545;
+  --ban-bg: rgba(220, 53, 69, 0.06);
   --btn-radius: 12px;
 }
 
@@ -243,15 +243,77 @@ details[open] > .rules-toggle::before {
   color: var(--text-sub);
 }
 
+/* --- 円形プログレスリング --- */
+
+.timer-ring-container {
+  position: relative;
+  width: clamp(200px, 55vw, 280px);
+  height: clamp(200px, 55vw, 280px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.timer-ring {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.timer-ring-bg {
+  fill: none;
+  stroke: var(--surface);
+  stroke-width: 5;
+}
+
+.timer-ring-progress {
+  fill: none;
+  stroke: var(--work);
+  stroke-width: 5;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 1s linear, stroke 0.3s ease;
+  filter: drop-shadow(0 0 6px var(--work));
+}
+
+/* リング — 状態別カラー */
+#screen-timer.state-short_break .timer-ring-progress,
+#screen-timer.state-interrupt_break .timer-ring-progress {
+  stroke: var(--break);
+  filter: drop-shadow(0 0 6px var(--break));
+}
+
+#screen-timer.state-long_break .timer-ring-progress {
+  stroke: var(--long-break);
+  filter: drop-shadow(0 0 6px var(--long-break));
+}
+
+#screen-ban .timer-ring-progress {
+  stroke: var(--ban);
+  filter: drop-shadow(0 0 6px var(--ban));
+}
+
+/* ラストミニット — パルスアニメーション */
+.timer-ring-progress.last-minute {
+  animation: ring-pulse 2s ease-in-out infinite;
+}
+
+@keyframes ring-pulse {
+  0%, 100% { opacity: 1; stroke-width: 5; }
+  50% { opacity: 0.7; stroke-width: 7; }
+}
+
 .timer-display {
-  font-family: "SF Mono", "Cascadia Code", "Consolas", monospace;
-  font-size: clamp(4rem, 20vw, 7rem);
-  font-weight: 300;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(3rem, 14vw, 4.5rem);
+  font-weight: 200;
   letter-spacing: 0.05em;
   line-height: 1;
   color: var(--text);
-  transition: color 0.3s;
-  margin: 8px 0;
+  transition: color 0.3s, font-size 0.3s;
+  position: relative;
+  z-index: 1;
 }
 
 .cycle-dots {
@@ -502,11 +564,42 @@ details[open] > .rules-toggle::before {
   background: var(--work);
 }
 
+/* --- 集中モード --- */
+
+#screen-timer.focus-mode .state-label,
+#screen-timer.focus-mode .cycle-label,
+#screen-timer.focus-mode .cycle-dots,
+#screen-timer.focus-mode .set-label-info,
+#screen-timer.focus-mode .break-reminder,
+#screen-timer.focus-mode .action-group,
+#screen-timer.focus-mode .violation-row,
+#screen-timer.focus-mode .btn-stop {
+  display: none !important;
+}
+
+#screen-timer.focus-mode .timer-content {
+  justify-content: center;
+}
+
+#screen-timer.focus-mode .timer-ring-container {
+  width: clamp(280px, 85vw, 420px);
+  height: clamp(280px, 85vw, 420px);
+  transition: width 0.3s ease, height 0.3s ease;
+}
+
+#screen-timer.focus-mode .timer-display {
+  font-size: clamp(4.5rem, 20vw, 7rem);
+}
+
 /* --- レスポンシブ --- */
 
 @media (max-height: 600px) {
+  .timer-ring-container {
+    width: clamp(160px, 45vw, 220px);
+    height: clamp(160px, 45vw, 220px);
+  }
   .timer-display {
-    font-size: 3.5rem;
+    font-size: clamp(2.5rem, 12vw, 3.5rem);
   }
   .action-group {
     margin-top: 8px;
