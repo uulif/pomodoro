@@ -1116,6 +1116,7 @@ details[open] > .rules-toggle::before {
     height: clamp(180px, 80vh, 380px);
     width: unset;
     max-width: calc(100vw - 24px);
+    padding: 8px;
   }
 
   #screen-timer.focus-mode.progress-frame .timer-display {
