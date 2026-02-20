@@ -43,6 +43,8 @@ let stopPending = false;
 let stopConfirmTimeout = null;
 let violationPending = false;
 let violationConfirmTimeout = null;
+let returnPending = false;
+let returnConfirmTimeout = null;
 
 // セッション終了ダブルタップ確認
 let sessionEndPending = false;
@@ -161,7 +163,7 @@ function setupEventListeners() {
 
 function registerSW() {
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js');
+    navigator.serviceWorker.register('./sw.js');
   }
 }
 
@@ -265,7 +267,7 @@ function loadState() {
     state = data.state || 'idle';
     cycle = data.cycle || 1;
     currentSet = data.currentSet || 1;
-    totalSets = data.totalSets || 1;
+    totalSets = typeof data.totalSets === 'number' ? data.totalSets : 1;
     targetEndTime = data.targetEndTime || 0;
     preNotified = data.preNotified || false;
     savedState = data.savedState || null;
@@ -425,6 +427,7 @@ function showScreen(id) {
   clearStopConfirm();
   clearViolationConfirm();
   clearSessionEndConfirm();
+  clearReturnConfirm();
   document.querySelectorAll('.screen').forEach(function (s) {
     s.classList.remove('active');
   });
@@ -459,6 +462,13 @@ function clearSessionEndConfirm() {
     activeSessionEndBtn.classList.remove('stop-confirm');
     activeSessionEndBtn = null;
   }
+}
+
+function clearReturnConfirm() {
+  if (returnConfirmTimeout) clearTimeout(returnConfirmTimeout);
+  returnPending = false;
+  var btn = document.getElementById('btn-return');
+  if (btn) btn.textContent = '戻る';
 }
 
 // ==========================================
@@ -913,6 +923,20 @@ function updateInterruptActionText() {
 }
 
 function handleReturn() {
+  if (returnPending) {
+    clearReturnConfirm();
+    executeReturn();
+  } else {
+    returnPending = true;
+    document.getElementById('btn-return').textContent = 'もう一度タップで戻る';
+    returnConfirmTimeout = setTimeout(function () {
+      returnPending = false;
+      document.getElementById('btn-return').textContent = '戻る';
+    }, 3000);
+  }
+}
+
+function executeReturn() {
   var elapsed = workElapsedAtInterrupt;
   workElapsedAtInterrupt = 0;
 
@@ -1020,6 +1044,7 @@ function resetToIdle() {
   workElapsedAtInterrupt = 0;
   stopPending = false;
   violationPending = false;
+  returnPending = false;
   sessionEndPending = false;
   catchingUp = false;
   currentPhaseDuration = 0;
@@ -1036,6 +1061,7 @@ function resetToIdle() {
   clearStopConfirm();
   clearViolationConfirm();
   clearSessionEndConfirm();
+  clearReturnConfirm();
   showScreen('screen-setup');
 }
 
@@ -1212,6 +1238,7 @@ function createWorker() {
         restartActiveTimer();
       } else {
         worker = null;
+        clearWatchdog();
         startFallbackTimer();
       }
     };
@@ -1302,18 +1329,21 @@ function handleStorageEvent(e) {
     workElapsedAtInterrupt = 0;
     stopPending = false;
     violationPending = false;
+    returnPending = false;
     sessionEndPending = false;
     catchingUp = false;
     currentPhaseDuration = 0;
     focusMode = false;
     focusInfoVisible = false;
     workerRetryCount = 0;
+    if (workerStableTimeout) { clearTimeout(workerStableTimeout); workerStableTimeout = null; }
     document.getElementById('screen-timer').classList.remove('focus-mode');
     resetColorShift();
     releaseWakeLock();
     clearStopConfirm();
     clearViolationConfirm();
     clearSessionEndConfirm();
+    clearReturnConfirm();
     showScreen('screen-setup');
   }
 }

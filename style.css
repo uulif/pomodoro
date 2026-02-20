@@ -994,6 +994,12 @@ details[open] > .rules-toggle::before {
 /* --- 横画面（landscape） --- */
 
 @media (orientation: landscape) {
+  /* 全画面 — ノッチ対応（左右safe-area） */
+  .screen {
+    padding-left: max(env(safe-area-inset-left, 24px), 24px);
+    padding-right: max(env(safe-area-inset-right, 24px), 24px);
+  }
+
   /* セットアップ画面 */
   #screen-setup {
     padding-bottom: max(env(safe-area-inset-bottom, 16px), 16px);
@@ -1024,13 +1030,6 @@ details[open] > .rules-toggle::before {
     max-width: calc(100vw - 48px);
   }
 
-  /* BAN画面フレーム */
-  #screen-ban .timer-frame-container {
-    width: unset;
-    height: clamp(100px, 45vh, 220px);
-    max-width: calc(100vw - 48px);
-  }
-
   .timer-display {
     font-size: clamp(2.5rem, 13vh, 6rem);
   }
@@ -1049,8 +1048,16 @@ details[open] > .rules-toggle::before {
     font-size: clamp(3rem, 15vh, 7rem);
   }
 
+  #screen-timer:not(.progress-frame).theme-bold .timer-display {
+    font-size: clamp(3.5rem, 18vh, 8rem);
+  }
+
   .theme-digital .timer-display {
     font-size: clamp(2rem, 11vh, 5rem);
+  }
+
+  #screen-timer:not(.progress-frame).theme-digital .timer-display {
+    font-size: clamp(2.5rem, 14vh, 6rem);
   }
 
   /* 集中モード情報ボタン — ノッチ対応 */
