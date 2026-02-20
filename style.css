@@ -54,6 +54,12 @@ body {
   display: flex;
 }
 
+#screen-setup {
+  overflow-y: auto;
+  justify-content: flex-start;
+  padding-top: max(env(safe-area-inset-top, 20px), 32px);
+}
+
 .center-content,
 .setup-content,
 .timer-content {

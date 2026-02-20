@@ -683,9 +683,9 @@ function updateFocusInfo() {
   if (!btn) return;
   if (focusInfoVisible) {
     var setText = totalSets === 0
-      ? 'S' + currentSet
-      : 'S' + currentSet + '/' + totalSets;
-    btn.textContent = setText + ' C' + cycle + '/' + CYCLES_PER_SET;
+      ? currentSet + 'セット目'
+      : currentSet + '/' + totalSets + 'セット';
+    btn.textContent = setText + ' ' + cycle + '/' + CYCLES_PER_SET + '周目';
   } else {
     btn.textContent = '\u2139';
   }
@@ -729,6 +729,7 @@ function onWorkerMessage(e) {
   lastTickTime = Date.now();
 
   if (data.type === 'tick') {
+    if (remaining === data.remaining) return;
     remaining = data.remaining;
     if (remaining <= PRE_NOTIFY_SEC && !preNotified) {
       preNotified = true;
@@ -1056,7 +1057,10 @@ function handleResumeWork() {
 // ==========================================
 
 function handleVisibilityChange() {
-  if (document.visibilityState !== 'visible') return;
+  if (document.visibilityState === 'hidden') {
+    if (state !== 'idle') saveState();
+    return;
+  }
   ensureAudio();
   if (state === 'idle' || state === 'completed') return;
   requestWakeLock();
@@ -1299,6 +1303,11 @@ function handleStorageEvent(e) {
     violationPending = false;
     sessionEndPending = false;
     catchingUp = false;
+    currentPhaseDuration = 0;
+    focusMode = false;
+    focusInfoVisible = false;
+    workerRetryCount = 0;
+    document.getElementById('screen-timer').classList.remove('focus-mode');
     resetColorShift();
     releaseWakeLock();
     clearStopConfirm();

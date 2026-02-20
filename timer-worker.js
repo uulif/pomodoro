@@ -19,7 +19,7 @@ self.onmessage = function (e) {
           intervalId = null;
           self.postMessage({ type: 'complete' });
         }
-      }, 100);
+      }, 1000);
       break;
 
     case 'stop':
