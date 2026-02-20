@@ -1,4 +1,4 @@
-const CACHE_NAME = 'matsumura-pomodoro-v17';
+const CACHE_NAME = 'matsumura-pomodoro-v18';
 const ASSETS = [
   './',
   './index.html',
@@ -6,7 +6,9 @@ const ASSETS = [
   './app.js',
   './timer-worker.js',
   './manifest.json',
-  './icon.svg'
+  './icon.svg',
+  './icon-192.png',
+  './icon-512.png'
 ];
 
 self.addEventListener('install', (e) => {
