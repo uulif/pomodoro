@@ -116,17 +116,22 @@ body {
   justify-content: center;
 }
 
+.set-options {
+  flex-wrap: nowrap;
+}
+
 .set-btn {
-  width: 52px;
-  height: 52px;
+  width: 44px;
+  height: 44px;
   border: 2px solid var(--text-sub);
   border-radius: var(--btn-radius);
   background: transparent;
   color: var(--text-sub);
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;
+  flex-shrink: 0;
 }
 
 .set-btn.selected {
@@ -135,7 +140,27 @@ body {
   color: var(--work);
 }
 
-/* --- テーマ・プログレス選択 --- */
+/* --- テーマ・プログレス選択（アコーディオン） --- */
+
+.selector-heading {
+  font-size: 0.85rem;
+  color: var(--text-sub);
+  text-align: center;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 4px 0;
+  position: relative;
+}
+
+.selector-heading::after {
+  content: ' \25BC';
+  font-size: 0.6rem;
+}
+
+.collapsed .selector-heading::after {
+  content: ' \25B6';
+}
 
 .theme-options,
 .progress-options {
@@ -143,6 +168,12 @@ body {
   gap: 6px;
   justify-content: center;
   flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.collapsed .theme-options,
+.collapsed .progress-options {
+  display: none;
 }
 
 .theme-btn,
@@ -956,5 +987,143 @@ details[open] > .rules-toggle::before {
     min-height: 48px;
     padding: 0 14px;
     font-size: 0.8rem;
+  }
+}
+
+/* --- 横画面（landscape） --- */
+
+@media (orientation: landscape) {
+  /* セットアップ画面 */
+  .setup-content {
+    max-width: 520px;
+    gap: 10px;
+  }
+
+  /* タイマー画面 */
+  .timer-content {
+    gap: 4px;
+  }
+
+  .state-label {
+    font-size: 0.85rem;
+  }
+
+  .cycle-label {
+    font-size: 0.75rem;
+  }
+
+  /* フレーム — vh基準 */
+  .timer-frame-container {
+    width: unset;
+    height: clamp(100px, 45vh, 220px);
+  }
+
+  .timer-display {
+    font-size: clamp(2.5rem, 13vh, 6rem);
+  }
+
+  /* 非フレーム — vh基準 */
+  #screen-timer:not(.progress-frame) .timer-frame-container {
+    height: auto;
+  }
+
+  #screen-timer:not(.progress-frame) .timer-display {
+    font-size: clamp(3.5rem, 20vh, 10rem);
+  }
+
+  /* テーマ別 landscape */
+  .theme-bold .timer-display {
+    font-size: clamp(3rem, 15vh, 7rem);
+  }
+
+  .theme-digital .timer-display {
+    font-size: clamp(2rem, 11vh, 5rem);
+  }
+
+  /* ドット・ラベル */
+  .cycle-dots {
+    gap: 8px;
+    margin: 0;
+  }
+
+  .dot {
+    width: 9px;
+    height: 9px;
+  }
+
+  .set-label-info {
+    font-size: 0.75rem;
+  }
+
+  /* ボタン */
+  .action-group {
+    margin-top: 2px;
+  }
+
+  .btn-action {
+    min-height: 38px;
+    padding: 0 14px;
+    font-size: 0.8rem;
+  }
+
+  .btn-stop {
+    margin-top: 4px;
+    min-height: 38px;
+  }
+
+  /* プログレス要素 */
+  .progress-bar-track {
+    width: clamp(150px, 40vw, 300px);
+  }
+
+  .progress-blocks {
+    width: clamp(100px, 20vw, 160px);
+  }
+
+  .progress-hourglass-container {
+    width: clamp(35px, 10vh, 60px);
+  }
+
+  /* 集中モード landscape: フレーム */
+  #screen-timer.focus-mode.progress-frame .timer-frame-container {
+    height: clamp(180px, 80vh, 380px);
+    width: unset;
+    max-width: calc(100vw - 24px);
+  }
+
+  #screen-timer.focus-mode.progress-frame .timer-display {
+    font-size: clamp(4.5rem, 22vh, 12rem);
+  }
+
+  #screen-timer.focus-mode.progress-frame.theme-bold .timer-display {
+    font-size: clamp(5rem, 24vh, 13rem);
+  }
+
+  #screen-timer.focus-mode.progress-frame.theme-digital .timer-display {
+    font-size: clamp(4rem, 18vh, 8rem);
+  }
+
+  /* 集中モード landscape: 非フレーム */
+  #screen-timer.focus-mode:not(.progress-frame) .timer-display {
+    font-size: clamp(6rem, 35vh, 18rem);
+  }
+
+  #screen-timer.focus-mode:not(.progress-frame).theme-bold .timer-display {
+    font-size: clamp(7rem, 38vh, 20rem);
+  }
+
+  /* 集中モード landscape: バー */
+  #screen-timer.focus-mode .progress-bar-track {
+    width: calc(100vw - 48px);
+  }
+
+  /* 集中モード landscape: ブロック */
+  #screen-timer.focus-mode .progress-blocks {
+    width: clamp(160px, 35vw, 280px);
+  }
+
+  /* 集中モード landscape: 砂時計 */
+  #screen-timer.focus-mode .progress-hourglass-container {
+    width: clamp(50px, 15vh, 100px);
   }
 }

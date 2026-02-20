@@ -90,7 +90,11 @@ function setupEventListeners() {
     });
   });
 
-  // テーマ選択
+  // テーマ選択（アコーディオン）
+  document.getElementById('theme-heading').addEventListener('click', function () {
+    document.querySelector('.theme-selector').classList.toggle('collapsed');
+  });
+
   document.querySelectorAll('.theme-btn').forEach(function (btn) {
     btn.addEventListener('click', function () {
       document.querySelectorAll('.theme-btn').forEach(function (b) {
@@ -98,11 +102,16 @@ function setupEventListeners() {
       });
       btn.classList.add('selected');
       setTheme(btn.dataset.theme);
-      updateSelectorHeading('.theme-selector .set-heading', 'デザイン', btn.textContent);
+      updateSelectorHeading('theme-heading', 'デザイン', btn.textContent);
+      document.querySelector('.theme-selector').classList.add('collapsed');
     });
   });
 
-  // プログレス選択
+  // プログレス選択（アコーディオン）
+  document.getElementById('progress-heading').addEventListener('click', function () {
+    document.querySelector('.progress-selector').classList.toggle('collapsed');
+  });
+
   document.querySelectorAll('.progress-btn').forEach(function (btn) {
     btn.addEventListener('click', function () {
       document.querySelectorAll('.progress-btn').forEach(function (b) {
@@ -110,7 +119,8 @@ function setupEventListeners() {
       });
       btn.classList.add('selected');
       setProgressStyle(btn.dataset.progress);
-      updateSelectorHeading('.progress-selector .set-heading', 'プログレス', btn.textContent);
+      updateSelectorHeading('progress-heading', 'プログレス', btn.textContent);
+      document.querySelector('.progress-selector').classList.add('collapsed');
     });
   });
 
@@ -159,8 +169,8 @@ function registerSW() {
 // テーマ管理
 // ==========================================
 
-function updateSelectorHeading(selector, base, label) {
-  var heading = document.querySelector(selector);
+function updateSelectorHeading(id, base, label) {
+  var heading = document.getElementById(id);
   if (heading) heading.textContent = base + '：' + label;
 }
 
@@ -186,6 +196,8 @@ function loadTheme() {
     });
   }
   setTheme(currentTheme);
+  var selectedBtn = document.querySelector('.theme-btn.selected');
+  if (selectedBtn) updateSelectorHeading('theme-heading', 'デザイン', selectedBtn.textContent);
 }
 
 // ==========================================
@@ -221,6 +233,8 @@ function loadProgressStyle() {
     });
   }
   setProgressStyle(currentProgress);
+  var selectedBtn = document.querySelector('.progress-btn.selected');
+  if (selectedBtn) updateSelectorHeading('progress-heading', 'プログレス', selectedBtn.textContent);
 }
 
 // ==========================================

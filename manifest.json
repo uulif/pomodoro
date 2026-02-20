@@ -4,7 +4,7 @@
   "description": "松村式ポモドーロタイマー - オフライン対応PWA",
   "start_url": "./index.html",
   "display": "standalone",
-  "orientation": "portrait",
+  "orientation": "any",
   "scope": "./",
   "background_color": "#ffffff",
   "theme_color": "#ffffff",
