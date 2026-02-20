@@ -1116,32 +1116,32 @@ details[open] > .rules-toggle::before {
     height: clamp(180px, 80vh, 380px);
     width: unset;
     max-width: calc(100vw - 24px);
-    padding: 8px;
+    padding: 12px;
   }
 
   #screen-timer.focus-mode.progress-frame .timer-display {
-    font-size: clamp(5.5rem, 40vh, 18rem);
+    font-size: clamp(88px, 36vh, 220px);
   }
 
   #screen-timer.focus-mode.progress-frame.theme-bold .timer-display {
-    font-size: clamp(6rem, 44vh, 20rem);
+    font-size: clamp(96px, 40vh, 240px);
   }
 
   #screen-timer.focus-mode.progress-frame.theme-digital .timer-display {
-    font-size: clamp(5rem, 33vh, 14rem);
+    font-size: clamp(80px, 28vh, 180px);
   }
 
   /* 集中モード landscape: 非フレーム */
   #screen-timer.focus-mode:not(.progress-frame) .timer-display {
-    font-size: clamp(7rem, 50vh, 24rem);
+    font-size: clamp(112px, 50vh, 380px);
   }
 
   #screen-timer.focus-mode:not(.progress-frame).theme-bold .timer-display {
-    font-size: clamp(8rem, 55vh, 28rem);
+    font-size: clamp(128px, 55vh, 420px);
   }
 
   #screen-timer.focus-mode:not(.progress-frame).theme-digital .timer-display {
-    font-size: clamp(5.5rem, 38vh, 18rem);
+    font-size: clamp(88px, 38vh, 280px);
   }
 
   /* 集中モード landscape: バー */
