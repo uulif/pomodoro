@@ -114,9 +114,6 @@ body {
   display: flex;
   gap: 8px;
   justify-content: center;
-}
-
-.set-options {
   flex-wrap: nowrap;
 }
 
@@ -727,12 +724,12 @@ details[open] > .rules-toggle::before {
 
 /* --- 使用禁止画面 --- */
 
-.state-ban {
-  color: var(--ban) !important;
+#screen-ban .state-ban {
+  color: var(--ban);
 }
 
-.timer-ban {
-  color: var(--ban) !important;
+#screen-ban .timer-ban {
+  color: var(--ban);
 }
 
 .ban-message {
@@ -955,6 +952,10 @@ details[open] > .rules-toggle::before {
   font-size: clamp(7rem, 36vw, 18rem);
 }
 
+#screen-timer.focus-mode:not(.progress-frame).theme-digital .timer-display {
+  font-size: clamp(5rem, 26vw, 12rem);
+}
+
 /* 集中モード: バー */
 #screen-timer.focus-mode .progress-bar-track {
   width: calc(100vw - 48px);
@@ -973,7 +974,7 @@ details[open] > .rules-toggle::before {
 
 /* --- レスポンシブ --- */
 
-@media (max-height: 600px) {
+@media (orientation: portrait) and (max-height: 600px) {
   .timer-frame-container {
     width: clamp(220px, 65vw, 300px);
   }
@@ -994,6 +995,10 @@ details[open] > .rules-toggle::before {
 
 @media (orientation: landscape) {
   /* セットアップ画面 */
+  #screen-setup {
+    padding-bottom: max(env(safe-area-inset-bottom, 16px), 16px);
+  }
+
   .setup-content {
     max-width: 520px;
     gap: 10px;
@@ -1016,6 +1021,14 @@ details[open] > .rules-toggle::before {
   .timer-frame-container {
     width: unset;
     height: clamp(100px, 45vh, 220px);
+    max-width: calc(100vw - 48px);
+  }
+
+  /* BAN画面フレーム */
+  #screen-ban .timer-frame-container {
+    width: unset;
+    height: clamp(100px, 45vh, 220px);
+    max-width: calc(100vw - 48px);
   }
 
   .timer-display {
@@ -1031,7 +1044,7 @@ details[open] > .rules-toggle::before {
     font-size: clamp(3.5rem, 20vh, 10rem);
   }
 
-  /* テーマ別 landscape */
+  /* テーマ別 landscape（clean/neon/gradient は基本サイズを継承） */
   .theme-bold .timer-display {
     font-size: clamp(3rem, 15vh, 7rem);
   }
@@ -1040,10 +1053,15 @@ details[open] > .rules-toggle::before {
     font-size: clamp(2rem, 11vh, 5rem);
   }
 
+  /* 集中モード情報ボタン — ノッチ対応 */
+  .btn-focus-info {
+    right: max(env(safe-area-inset-right, 16px), 16px);
+  }
+
   /* ドット・ラベル */
   .cycle-dots {
     gap: 8px;
-    margin: 0;
+    margin: 2px 0;
   }
 
   .dot {
@@ -1053,11 +1071,13 @@ details[open] > .rules-toggle::before {
 
   .set-label-info {
     font-size: 0.75rem;
+    margin: 2px 0;
   }
 
   /* ボタン */
   .action-group {
     margin-top: 2px;
+    gap: 12px;
   }
 
   .btn-action {
@@ -1110,6 +1130,10 @@ details[open] > .rules-toggle::before {
 
   #screen-timer.focus-mode:not(.progress-frame).theme-bold .timer-display {
     font-size: clamp(7rem, 38vh, 20rem);
+  }
+
+  #screen-timer.focus-mode:not(.progress-frame).theme-digital .timer-display {
+    font-size: clamp(4.5rem, 22vh, 10rem);
   }
 
   /* 集中モード landscape: バー */
