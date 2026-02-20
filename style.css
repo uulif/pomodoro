@@ -186,27 +186,6 @@ body {
   opacity: 0.8;
 }
 
-.btn-test {
-  width: 100%;
-  max-width: 280px;
-  min-height: 48px;
-  border: 1px solid var(--text-sub);
-  border-radius: var(--btn-radius);
-  background: transparent;
-  color: var(--text-sub);
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: opacity 0.2s;
-  margin-top: 4px;
-}
-
-.btn-test:active {
-  opacity: 0.7;
-}
-
-.btn-test:disabled {
-  opacity: 0.5;
-}
 
 /* --- ルール表示 --- */
 

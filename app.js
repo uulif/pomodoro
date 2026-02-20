@@ -98,6 +98,7 @@ function setupEventListeners() {
       });
       btn.classList.add('selected');
       setTheme(btn.dataset.theme);
+      updateSelectorHeading('.theme-selector .set-heading', 'デザイン', btn.textContent);
     });
   });
 
@@ -109,11 +110,11 @@ function setupEventListeners() {
       });
       btn.classList.add('selected');
       setProgressStyle(btn.dataset.progress);
+      updateSelectorHeading('.progress-selector .set-heading', 'プログレス', btn.textContent);
     });
   });
 
   document.getElementById('btn-start').addEventListener('click', startSession);
-  document.getElementById('btn-test-notify').addEventListener('click', testNotification);
 
   // 集中モード切替
   document.querySelector('#screen-timer .timer-content').addEventListener('click', function (e) {
@@ -157,6 +158,11 @@ function registerSW() {
 // ==========================================
 // テーマ管理
 // ==========================================
+
+function updateSelectorHeading(selector, base, label) {
+  var heading = document.querySelector(selector);
+  if (heading) heading.textContent = base + '：' + label;
+}
 
 function setTheme(theme) {
   currentTheme = theme;
@@ -304,25 +310,6 @@ function playCompleteSound() {
   playTone(880, 0.2, 0.4, 0);
   playTone(880, 0.2, 0.4, 0.3);
   playTone(880, 0.2, 0.4, 0.6);
-}
-
-function testNotification() {
-  initAudio();
-  requestNotificationPermission();
-  var btn = document.getElementById('btn-test-notify');
-  btn.textContent = '予告通知...';
-  btn.disabled = true;
-  playPreSound();
-  vibrateOnce();
-  setTimeout(function () {
-    btn.textContent = '到達通知...';
-    playCompleteSound();
-    vibrateThrice();
-    setTimeout(function () {
-      btn.textContent = '通知テスト';
-      btn.disabled = false;
-    }, 1200);
-  }, 1500);
 }
 
 // ==========================================
