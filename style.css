@@ -1012,26 +1012,26 @@ details[open] > .rules-toggle::before {
 
   /* タイマー画面 */
   .timer-content {
-    gap: 4px;
+    gap: 2px;
   }
 
   .state-label {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
   }
 
   .cycle-label {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
   }
 
   /* フレーム — vh基準 */
   .timer-frame-container {
     width: unset;
-    height: clamp(100px, 45vh, 220px);
+    height: clamp(120px, 50vh, 260px);
     max-width: calc(100vw - 48px);
   }
 
   .timer-display {
-    font-size: clamp(2.5rem, 13vh, 6rem);
+    font-size: clamp(3.5rem, 20vh, 8rem);
   }
 
   /* 非フレーム — vh基準 */
@@ -1040,24 +1040,24 @@ details[open] > .rules-toggle::before {
   }
 
   #screen-timer:not(.progress-frame) .timer-display {
-    font-size: clamp(3.5rem, 20vh, 10rem);
+    font-size: clamp(5rem, 28vh, 12rem);
   }
 
   /* テーマ別 landscape（clean/neon/gradient は基本サイズを継承） */
   .theme-bold .timer-display {
-    font-size: clamp(3rem, 15vh, 7rem);
+    font-size: clamp(4rem, 23vh, 9rem);
   }
 
   #screen-timer:not(.progress-frame).theme-bold .timer-display {
-    font-size: clamp(3.5rem, 18vh, 8rem);
+    font-size: clamp(5rem, 30vh, 13rem);
   }
 
   .theme-digital .timer-display {
-    font-size: clamp(2rem, 11vh, 5rem);
+    font-size: clamp(3rem, 17vh, 7rem);
   }
 
   #screen-timer:not(.progress-frame).theme-digital .timer-display {
-    font-size: clamp(2.5rem, 14vh, 6rem);
+    font-size: clamp(4rem, 22vh, 9rem);
   }
 
   /* 集中モード情報ボタン — ノッチ対応 */
@@ -1119,28 +1119,28 @@ details[open] > .rules-toggle::before {
   }
 
   #screen-timer.focus-mode.progress-frame .timer-display {
-    font-size: clamp(4.5rem, 22vh, 12rem);
+    font-size: clamp(5.5rem, 28vh, 14rem);
   }
 
   #screen-timer.focus-mode.progress-frame.theme-bold .timer-display {
-    font-size: clamp(5rem, 24vh, 13rem);
+    font-size: clamp(6rem, 30vh, 15rem);
   }
 
   #screen-timer.focus-mode.progress-frame.theme-digital .timer-display {
-    font-size: clamp(4rem, 18vh, 8rem);
+    font-size: clamp(5rem, 24vh, 10rem);
   }
 
   /* 集中モード landscape: 非フレーム */
   #screen-timer.focus-mode:not(.progress-frame) .timer-display {
-    font-size: clamp(6rem, 35vh, 18rem);
+    font-size: clamp(7rem, 40vh, 20rem);
   }
 
   #screen-timer.focus-mode:not(.progress-frame).theme-bold .timer-display {
-    font-size: clamp(7rem, 38vh, 20rem);
+    font-size: clamp(8rem, 44vh, 22rem);
   }
 
   #screen-timer.focus-mode:not(.progress-frame).theme-digital .timer-display {
-    font-size: clamp(4.5rem, 22vh, 10rem);
+    font-size: clamp(5.5rem, 28vh, 12rem);
   }
 
   /* 集中モード landscape: バー */
