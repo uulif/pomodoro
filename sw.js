@@ -1,9 +1,9 @@
-const CACHE_NAME = 'matsumura-pomodoro-v28';
+const CACHE_NAME = 'matsumura-pomodoro-v29';
 const ASSETS = [
   './',
   './index.html',
-  './style.css?v=28',
-  './app.js?v=28',
+  './style.css?v=29',
+  './app.js?v=29',
   './timer-worker.js',
   './manifest.json',
   './icon.svg',
