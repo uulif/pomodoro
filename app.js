@@ -9,6 +9,8 @@ const LONG_BREAK_SEC = 25 * 60;
 const BAN_SEC = 3 * 60;
 const PRE_NOTIFY_OPTIONS = [120, 60, 30, 15];
 const PRE_NOTIFY_KEY = 'matsumura-prenotify';
+const SOUND_VOL_KEY = 'matsumura-sound-vol';
+const SOUND_TYPE_KEY = 'matsumura-sound-type';
 const CYCLES_PER_SET = 4;
 const STORAGE_KEY = 'matsumura-pomodoro';
 const THEME_KEY = 'matsumura-theme';
@@ -25,6 +27,8 @@ let remaining = 0;
 let targetEndTime = 0;
 let preNotifyConfig = [60];
 let preNotifiedSet = new Set();
+let soundVolume = 'mid';
+let soundType = 'triangle';
 let catchingUp = false;
 let currentPhaseDuration = 0;
 let focusMode = false;
@@ -73,6 +77,8 @@ function init() {
   loadTheme();
   loadProgressStyle();
   loadPreNotifyConfig();
+  loadSoundVolume();
+  loadSoundType();
   setupEventListeners();
   document.addEventListener('visibilitychange', handleVisibilityChange);
   window.addEventListener('storage', handleStorageEvent);
@@ -138,6 +144,38 @@ function setupEventListeners() {
     btn.addEventListener('click', function () {
       btn.classList.toggle('selected');
       updatePreNotifyFromUI();
+    });
+  });
+
+  // 音量選択（アコーディオン）
+  document.getElementById('sound-vol-heading').addEventListener('click', function () {
+    document.querySelector('.sound-vol-selector').classList.toggle('collapsed');
+  });
+
+  document.querySelectorAll('.sound-vol-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.sound-vol-btn').forEach(function (b) {
+        b.classList.remove('selected');
+      });
+      btn.classList.add('selected');
+      setSoundVolume(btn.dataset.vol);
+      document.querySelector('.sound-vol-selector').classList.add('collapsed');
+    });
+  });
+
+  // 音色選択（アコーディオン）
+  document.getElementById('sound-type-heading').addEventListener('click', function () {
+    document.querySelector('.sound-type-selector').classList.toggle('collapsed');
+  });
+
+  document.querySelectorAll('.sound-type-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.sound-type-btn').forEach(function (b) {
+        b.classList.remove('selected');
+      });
+      btn.classList.add('selected');
+      setSoundType(btn.dataset.type);
+      document.querySelector('.sound-type-selector').classList.add('collapsed');
     });
   });
 
@@ -310,6 +348,59 @@ function updatePreNotifyHeading() {
 }
 
 // ==========================================
+// 音量・音色管理
+// ==========================================
+
+function getVolumeMultiplier() {
+  var multipliers = { low: 0.4, mid: 0.7, high: 1.0 };
+  return multipliers[soundVolume] || 0.7;
+}
+
+function loadSoundVolume() {
+  var saved = localStorage.getItem(SOUND_VOL_KEY);
+  if (saved && (saved === 'low' || saved === 'mid' || saved === 'high')) {
+    soundVolume = saved;
+  }
+  document.querySelectorAll('.sound-vol-btn').forEach(function (btn) {
+    btn.classList.toggle('selected', btn.dataset.vol === soundVolume);
+  });
+  updateSelectorHeading('sound-vol-heading', '音量', getVolLabel(soundVolume));
+}
+
+function setSoundVolume(vol) {
+  soundVolume = vol;
+  localStorage.setItem(SOUND_VOL_KEY, vol);
+  updateSelectorHeading('sound-vol-heading', '音量', getVolLabel(vol));
+}
+
+function getVolLabel(vol) {
+  var labels = { low: '小', mid: '中', high: '大' };
+  return labels[vol] || '中';
+}
+
+function loadSoundType() {
+  var saved = localStorage.getItem(SOUND_TYPE_KEY);
+  if (saved && (saved === 'sine' || saved === 'triangle' || saved === 'square')) {
+    soundType = saved;
+  }
+  document.querySelectorAll('.sound-type-btn').forEach(function (btn) {
+    btn.classList.toggle('selected', btn.dataset.type === soundType);
+  });
+  updateSelectorHeading('sound-type-heading', '音色', getTypeLabel(soundType));
+}
+
+function setSoundType(type) {
+  soundType = type;
+  localStorage.setItem(SOUND_TYPE_KEY, type);
+  updateSelectorHeading('sound-type-heading', '音色', getTypeLabel(type));
+}
+
+function getTypeLabel(type) {
+  var labels = { sine: '柔らかい', triangle: '普通', square: 'はっきり' };
+  return labels[type] || '普通';
+}
+
+// ==========================================
 // 状態永続化
 // ==========================================
 
@@ -378,15 +469,16 @@ function ensureAudio() {
   }
 }
 
-function playTone(freq, duration, volume, delay, waveType) {
+function playTone(freq, duration, volume, delay) {
   ensureAudio();
   if (!audioCtx || audioCtx.state !== 'running') return;
   var startTime = audioCtx.currentTime + (delay || 0);
   var osc = audioCtx.createOscillator();
   var gain = audioCtx.createGain();
-  osc.type = waveType || 'triangle';
+  osc.type = soundType;
   osc.frequency.value = freq;
-  gain.gain.setValueAtTime(volume, startTime);
+  var actualVolume = volume * getVolumeMultiplier();
+  gain.gain.setValueAtTime(actualVolume, startTime);
   gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
   osc.connect(gain);
   gain.connect(audioCtx.destination);

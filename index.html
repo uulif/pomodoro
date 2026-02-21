@@ -10,7 +10,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icon-192.png">
-  <link rel="stylesheet" href="style.css?v=31">
+  <link rel="stylesheet" href="style.css?v=32">
 </head>
 <body>
 
@@ -45,7 +45,7 @@
           <button class="set-btn" data-sets="2">2</button>
           <button class="set-btn" data-sets="3">3</button>
           <button class="set-btn" data-sets="4">4</button>
-          <button class="set-btn" data-sets="0"><svg width="22" height="14" viewBox="-1 -2 26 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12,6 C12,1 6,-1 3,3 C0,7 3,13 6,11 C9,9 12,6 12,6 C12,6 15,3 18,1 C21,-1 24,5 21,9 C18,13 12,11 12,6"/></svg></button>
+          <button class="set-btn" data-sets="0">∞</button>
         </div>
       </div>
       <div class="theme-selector collapsed">
@@ -75,6 +75,22 @@
           <button class="prenotify-btn selected" data-sec="60">1分前</button>
           <button class="prenotify-btn" data-sec="30">30秒前</button>
           <button class="prenotify-btn" data-sec="15">15秒前</button>
+        </div>
+      </div>
+      <div class="sound-vol-selector collapsed">
+        <div class="selector-heading" id="sound-vol-heading">音量：中</div>
+        <div class="sound-vol-options">
+          <button class="sound-vol-btn" data-vol="low">小</button>
+          <button class="sound-vol-btn selected" data-vol="mid">中</button>
+          <button class="sound-vol-btn" data-vol="high">大</button>
+        </div>
+      </div>
+      <div class="sound-type-selector collapsed">
+        <div class="selector-heading" id="sound-type-heading">音色：普通</div>
+        <div class="sound-type-options">
+          <button class="sound-type-btn" data-type="sine">柔らかい</button>
+          <button class="sound-type-btn selected" data-type="triangle">普通</button>
+          <button class="sound-type-btn" data-type="square">はっきり</button>
         </div>
       </div>
       <button id="btn-start" class="btn-primary">スタート</button>
@@ -204,6 +220,6 @@
     </defs>
   </svg>
 
-  <script src="app.js?v=31"></script>
+  <script src="app.js?v=32"></script>
 </body>
 </html>

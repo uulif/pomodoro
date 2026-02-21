@@ -90,7 +90,9 @@ body {
 .set-selector,
 .theme-selector,
 .progress-selector,
-.prenotify-selector {
+.prenotify-selector,
+.sound-vol-selector,
+.sound-type-selector {
   width: 100%;
   background: var(--surface);
   border-radius: 16px;
@@ -162,7 +164,9 @@ body {
 
 .theme-options,
 .progress-options,
-.prenotify-options {
+.prenotify-options,
+.sound-vol-options,
+.sound-type-options {
   display: flex;
   gap: 6px;
   justify-content: center;
@@ -172,13 +176,17 @@ body {
 
 .collapsed .theme-options,
 .collapsed .progress-options,
-.collapsed .prenotify-options {
+.collapsed .prenotify-options,
+.collapsed .sound-vol-options,
+.collapsed .sound-type-options {
   display: none;
 }
 
 .theme-btn,
 .progress-btn,
-.prenotify-btn {
+.prenotify-btn,
+.sound-vol-btn,
+.sound-type-btn {
   padding: 8px 14px;
   border: 2px solid var(--text-sub);
   border-radius: var(--btn-radius);
@@ -192,7 +200,9 @@ body {
 
 .theme-btn.selected,
 .progress-btn.selected,
-.prenotify-btn.selected {
+.prenotify-btn.selected,
+.sound-vol-btn.selected,
+.sound-type-btn.selected {
   border-color: var(--work);
   background: var(--work-bg);
   color: var(--work);
