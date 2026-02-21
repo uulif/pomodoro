@@ -10,7 +10,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icon-192.png">
-  <link rel="stylesheet" href="style.css?v=30">
+  <link rel="stylesheet" href="style.css?v=31">
 </head>
 <body>
 
@@ -66,6 +66,15 @@
           <button class="progress-btn" data-progress="color">カラー</button>
           <button class="progress-btn" data-progress="blocks">ブロック</button>
           <button class="progress-btn" data-progress="hourglass">砂時計</button>
+        </div>
+      </div>
+      <div class="prenotify-selector collapsed">
+        <div class="selector-heading" id="prenotify-heading">事前通知：1分前</div>
+        <div class="prenotify-options">
+          <button class="prenotify-btn" data-sec="120">2分前</button>
+          <button class="prenotify-btn selected" data-sec="60">1分前</button>
+          <button class="prenotify-btn" data-sec="30">30秒前</button>
+          <button class="prenotify-btn" data-sec="15">15秒前</button>
         </div>
       </div>
       <button id="btn-start" class="btn-primary">スタート</button>
@@ -195,6 +204,6 @@
     </defs>
   </svg>
 
-  <script src="app.js?v=30"></script>
+  <script src="app.js?v=31"></script>
 </body>
 </html>

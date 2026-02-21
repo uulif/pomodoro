@@ -7,7 +7,8 @@ const WORK_SEC = 25 * 60;
 const SHORT_BREAK_SEC = 5 * 60 + 30;
 const LONG_BREAK_SEC = 25 * 60;
 const BAN_SEC = 3 * 60;
-const PRE_NOTIFY_SEC = 60;
+const PRE_NOTIFY_OPTIONS = [120, 60, 30, 15];
+const PRE_NOTIFY_KEY = 'matsumura-prenotify';
 const CYCLES_PER_SET = 4;
 const STORAGE_KEY = 'matsumura-pomodoro';
 const THEME_KEY = 'matsumura-theme';
@@ -22,7 +23,8 @@ let currentSet = 1;
 let totalSets = 1;
 let remaining = 0;
 let targetEndTime = 0;
-let preNotified = false;
+let preNotifyConfig = [60];
+let preNotifiedSet = new Set();
 let catchingUp = false;
 let currentPhaseDuration = 0;
 let focusMode = false;
@@ -70,6 +72,7 @@ function init() {
   createWorker();
   loadTheme();
   loadProgressStyle();
+  loadPreNotifyConfig();
   setupEventListeners();
   document.addEventListener('visibilitychange', handleVisibilityChange);
   window.addEventListener('storage', handleStorageEvent);
@@ -123,6 +126,18 @@ function setupEventListeners() {
       setProgressStyle(btn.dataset.progress);
       updateSelectorHeading('progress-heading', 'プログレス', btn.textContent);
       document.querySelector('.progress-selector').classList.add('collapsed');
+    });
+  });
+
+  // 事前通知選択（アコーディオン・マルチセレクト）
+  document.getElementById('prenotify-heading').addEventListener('click', function () {
+    document.querySelector('.prenotify-selector').classList.toggle('collapsed');
+  });
+
+  document.querySelectorAll('.prenotify-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      btn.classList.toggle('selected');
+      updatePreNotifyFromUI();
     });
   });
 
@@ -240,6 +255,61 @@ function loadProgressStyle() {
 }
 
 // ==========================================
+// 事前通知設定管理
+// ==========================================
+
+function secToTimeStr(sec) {
+  if (sec >= 60) return Math.floor(sec / 60) + '分';
+  return sec + '秒';
+}
+
+function secToLabel(sec) {
+  return secToTimeStr(sec) + '前';
+}
+
+function loadPreNotifyConfig() {
+  var saved = localStorage.getItem(PRE_NOTIFY_KEY);
+  if (saved) {
+    try {
+      preNotifyConfig = JSON.parse(saved);
+    } catch (e) {
+      preNotifyConfig = [60];
+    }
+  }
+  document.querySelectorAll('.prenotify-btn').forEach(function (btn) {
+    var sec = parseInt(btn.dataset.sec);
+    btn.classList.toggle('selected', preNotifyConfig.indexOf(sec) !== -1);
+  });
+  updatePreNotifyHeading();
+}
+
+function savePreNotifyConfig() {
+  localStorage.setItem(PRE_NOTIFY_KEY, JSON.stringify(preNotifyConfig));
+}
+
+function updatePreNotifyFromUI() {
+  preNotifyConfig = [];
+  document.querySelectorAll('.prenotify-btn.selected').forEach(function (btn) {
+    preNotifyConfig.push(parseInt(btn.dataset.sec));
+  });
+  preNotifyConfig.sort(function (a, b) { return b - a; });
+  savePreNotifyConfig();
+  updatePreNotifyHeading();
+}
+
+function updatePreNotifyHeading() {
+  var heading = document.getElementById('prenotify-heading');
+  if (!heading) return;
+  if (preNotifyConfig.length === 0) {
+    heading.textContent = '事前通知：OFF';
+  } else {
+    var sorted = preNotifyConfig.slice().sort(function (a, b) { return b - a; });
+    var labels = sorted.map(secToLabel);
+    heading.textContent = '事前通知：' + labels.join(', ');
+  }
+}
+
+// ==========================================
 // 状態永続化
 // ==========================================
 
@@ -250,7 +320,7 @@ function saveState() {
     currentSet: currentSet,
     totalSets: totalSets,
     targetEndTime: targetEndTime,
-    preNotified: preNotified,
+    preNotifiedTimes: Array.from(preNotifiedSet),
     savedState: savedState,
     savedRemaining: savedRemaining,
     workElapsedAtInterrupt: workElapsedAtInterrupt,
@@ -269,7 +339,13 @@ function loadState() {
     currentSet = data.currentSet || 1;
     totalSets = typeof data.totalSets === 'number' ? data.totalSets : 1;
     targetEndTime = data.targetEndTime || 0;
-    preNotified = data.preNotified || false;
+    if (data.preNotifiedTimes) {
+      preNotifiedSet = new Set(data.preNotifiedTimes);
+    } else if (data.preNotified) {
+      preNotifiedSet = new Set([60]);
+    } else {
+      preNotifiedSet = new Set();
+    }
     savedState = data.savedState || null;
     savedRemaining = data.savedRemaining || 0;
     workElapsedAtInterrupt = data.workElapsedAtInterrupt || 0;
@@ -302,13 +378,13 @@ function ensureAudio() {
   }
 }
 
-function playTone(freq, duration, volume, delay) {
+function playTone(freq, duration, volume, delay, waveType) {
   ensureAudio();
   if (!audioCtx || audioCtx.state !== 'running') return;
   var startTime = audioCtx.currentTime + (delay || 0);
   var osc = audioCtx.createOscillator();
   var gain = audioCtx.createGain();
-  osc.type = 'sine';
+  osc.type = waveType || 'triangle';
   osc.frequency.value = freq;
   gain.gain.setValueAtTime(volume, startTime);
   gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
@@ -318,14 +394,23 @@ function playTone(freq, duration, volume, delay) {
   osc.stop(startTime + duration);
 }
 
-function playPreSound() {
-  playTone(523, 0.4, 0.2, 0);
+function playPreSound(sec) {
+  var config = {
+    120: { freq: 440, vol: 0.4, count: 1 },
+    60:  { freq: 523, vol: 0.5, count: 1 },
+    30:  { freq: 660, vol: 0.6, count: 2 },
+    15:  { freq: 784, vol: 0.7, count: 2 }
+  };
+  var c = config[sec] || config[60];
+  for (var i = 0; i < c.count; i++) {
+    playTone(c.freq, 0.3, c.vol, i * 0.4);
+  }
 }
 
 function playCompleteSound() {
-  playTone(880, 0.2, 0.4, 0);
-  playTone(880, 0.2, 0.4, 0.3);
-  playTone(880, 0.2, 0.4, 0.6);
+  playTone(880, 0.3, 0.7, 0);
+  playTone(880, 0.3, 0.7, 0.4);
+  playTone(1047, 0.4, 0.7, 0.8);
 }
 
 // ==========================================
@@ -336,19 +421,28 @@ function vibrateOnce() {
   if (navigator.vibrate) navigator.vibrate(200);
 }
 
+function vibrateTwice() {
+  if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+}
+
 function vibrateThrice() {
   if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 200]);
+}
+
+function vibrateForPreNotify(sec) {
+  if (sec >= 60) vibrateOnce();
+  else vibrateTwice();
 }
 
 // ==========================================
 // 通知
 // ==========================================
 
-function preNotify() {
+function preNotify(sec) {
   if (catchingUp) return;
-  playPreSound();
-  vibrateOnce();
-  showOSNotification('松村式ポモドーロ', getPreNotifyMessage());
+  playPreSound(sec);
+  vibrateForPreNotify(sec);
+  showOSNotification('松村式ポモドーロ', getPreNotifyMessage(sec));
 }
 
 function completeNotify() {
@@ -358,15 +452,16 @@ function completeNotify() {
   showOSNotification('松村式ポモドーロ', getCompleteNotifyMessage());
 }
 
-function getPreNotifyMessage() {
+function getPreNotifyMessage(sec) {
+  var timeStr = secToTimeStr(sec);
   var labels = {
-    working: '作業終了まであと1分',
-    short_break: '休憩終了まであと1分',
-    long_break: '長休憩終了まであと1分',
-    interrupt_break: '休憩終了まであと1分',
-    banned: '禁止終了まであと1分'
+    working: '作業終了まであと' + timeStr,
+    short_break: '休憩終了まであと' + timeStr,
+    long_break: '長休憩終了まであと' + timeStr,
+    interrupt_break: '休憩終了まであと' + timeStr,
+    banned: '禁止終了まであと' + timeStr
   };
-  return labels[state] || 'あと1分';
+  return labels[state] || 'あと' + timeStr;
 }
 
 function getCompleteNotifyMessage() {
@@ -571,7 +666,7 @@ function updateProgressFrame() {
   var offset = 100 * (1 - Math.max(0, Math.min(1, progress)));
   frameEl.style.strokeDasharray = '100';
   frameEl.style.strokeDashoffset = offset;
-  if (remaining <= PRE_NOTIFY_SEC && remaining > 0) {
+  if (remaining <= 60 && remaining > 0) {
     frameEl.classList.add('last-minute');
   } else {
     frameEl.classList.remove('last-minute');
@@ -673,7 +768,7 @@ function updateBanFrame() {
   var offset = 100 * (1 - Math.max(0, Math.min(1, progress)));
   frameEl.style.strokeDasharray = '100';
   frameEl.style.strokeDashoffset = offset;
-  if (remaining <= PRE_NOTIFY_SEC && remaining > 0) {
+  if (remaining <= 60 && remaining > 0) {
     frameEl.classList.add('last-minute');
   } else {
     frameEl.classList.remove('last-minute');
@@ -713,7 +808,7 @@ function startTimer(duration) {
     targetEndTime = Date.now() + duration * 1000;
   }
   remaining = duration;
-  preNotified = false;
+  preNotifiedSet = new Set();
   saveState();
   if (!catchingUp) {
     if (worker) {
@@ -742,11 +837,16 @@ function onWorkerMessage(e) {
   if (data.type === 'tick') {
     if (remaining === data.remaining) return;
     remaining = data.remaining;
-    if (remaining <= PRE_NOTIFY_SEC && !preNotified) {
-      preNotified = true;
-      preNotify();
-      saveState();
+    var newNotification = false;
+    for (var i = 0; i < preNotifyConfig.length; i++) {
+      var sec = preNotifyConfig[i];
+      if (remaining <= sec && !preNotifiedSet.has(sec) && sec < currentPhaseDuration) {
+        preNotifiedSet.add(sec);
+        preNotify(sec);
+        newNotification = true;
+      }
     }
+    if (newNotification) saveState();
     if (state === 'banned') {
       updateBanDisplay();
       updateBanFrame();
@@ -884,7 +984,10 @@ function handleToilet() {
 function handleToiletResume() {
   var rem = savedRemaining;
   state = savedState;
-  preNotified = rem <= PRE_NOTIFY_SEC;
+  preNotifiedSet = new Set();
+  for (var i = 0; i < preNotifyConfig.length; i++) {
+    if (rem <= preNotifyConfig[i]) preNotifiedSet.add(preNotifyConfig[i]);
+  }
   savedState = null;
   savedRemaining = 0;
   remaining = rem;
@@ -957,7 +1060,10 @@ function executeReturn() {
     var rem = WORK_SEC - elapsed;
     remaining = rem;
     currentPhaseDuration = WORK_SEC;
-    preNotified = rem <= PRE_NOTIFY_SEC;
+    preNotifiedSet = new Set();
+    for (var j = 0; j < preNotifyConfig.length; j++) {
+      if (rem <= preNotifyConfig[j]) preNotifiedSet.add(preNotifyConfig[j]);
+    }
     showScreen('screen-timer');
     updateUI();
     startTimer(rem);
@@ -1038,7 +1144,7 @@ function resetToIdle() {
   currentSet = 1;
   remaining = 0;
   targetEndTime = 0;
-  preNotified = false;
+  preNotifiedSet = new Set();
   savedState = null;
   savedRemaining = 0;
   workElapsedAtInterrupt = 0;
@@ -1129,9 +1235,12 @@ function recoverTimerState() {
 
     if (targetEndTime && Date.now() < targetEndTime) {
       remaining = Math.max(1, Math.ceil((targetEndTime - Date.now()) / 1000));
-      if (remaining <= PRE_NOTIFY_SEC && !preNotified) {
-        preNotified = true;
-        preNotify();
+      for (var i = 0; i < preNotifyConfig.length; i++) {
+        var sec = preNotifyConfig[i];
+        if (remaining <= sec && !preNotifiedSet.has(sec) && sec < currentPhaseDuration) {
+          preNotifiedSet.add(sec);
+          preNotify(sec);
+        }
       }
       showCurrentScreen();
       if (worker) worker.postMessage({ action: 'start', duration: remaining });
@@ -1146,9 +1255,12 @@ function recoverTimerState() {
     }
   } else {
     remaining = Math.max(0, Math.ceil((targetEndTime - Date.now()) / 1000));
-    if (remaining <= PRE_NOTIFY_SEC && !preNotified) {
-      preNotified = true;
-      preNotify();
+    for (var i = 0; i < preNotifyConfig.length; i++) {
+      var sec = preNotifyConfig[i];
+      if (remaining <= sec && !preNotifiedSet.has(sec) && sec < currentPhaseDuration) {
+        preNotifiedSet.add(sec);
+        preNotify(sec);
+      }
     }
     showCurrentScreen();
     if (worker) worker.postMessage({ action: 'start', duration: remaining });
@@ -1290,11 +1402,16 @@ function startFallbackTimer() {
     var rem = Math.max(0, Math.ceil((targetEndTime - Date.now()) / 1000));
     remaining = rem;
     lastTickTime = Date.now();
-    if (remaining <= PRE_NOTIFY_SEC && !preNotified) {
-      preNotified = true;
-      preNotify();
-      saveState();
+    var fbNewNotify = false;
+    for (var i = 0; i < preNotifyConfig.length; i++) {
+      var sec = preNotifyConfig[i];
+      if (remaining <= sec && !preNotifiedSet.has(sec) && sec < currentPhaseDuration) {
+        preNotifiedSet.add(sec);
+        preNotify(sec);
+        fbNewNotify = true;
+      }
     }
+    if (fbNewNotify) saveState();
     if (state === 'banned') { updateBanDisplay(); updateBanFrame(); }
     else { updateTimerDisplay(); updateProgress(); }
     if (rem <= 0) {
@@ -1323,7 +1440,7 @@ function handleStorageEvent(e) {
     currentSet = 1;
     remaining = 0;
     targetEndTime = 0;
-    preNotified = false;
+    preNotifiedSet = new Set();
     savedState = null;
     savedRemaining = 0;
     workElapsedAtInterrupt = 0;
