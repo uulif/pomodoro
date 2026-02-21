@@ -134,6 +134,15 @@ body {
   flex-shrink: 0;
 }
 
+.set-btn-inf {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  line-height: 1;
+  padding-bottom: 2px;
+}
+
 .set-btn.selected {
   border-color: var(--work);
   background: var(--work-bg);
